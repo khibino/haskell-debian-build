@@ -7,6 +7,8 @@ module Debian.Package.Command (
 
   unpackInDir, unpack, packInDir', packInDir,
 
+  cabalDebian,
+
   debuild,
 
   BuildMode (..),
@@ -17,6 +19,8 @@ module Debian.Package.Command (
 
   reinstallGhcLibrary
   ) where
+
+import Data.Maybe (fromMaybe)
 
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
@@ -68,6 +72,15 @@ packInDir' pdir apath wdir = do
 packInDir :: FilePath -> FilePath -> IO ()
 pdir `packInDir` wdir =
   packInDir' pdir (pdir <.> tarGz) wdir
+
+cabalDebian :: Maybe String -> IO ()
+cabalDebian mayRev = do
+  rawSystem' [ "cabal-debian"
+             , "--debianize" {- for cabal-debian 1.25 -}
+             , "--quilt"
+             , "--revision=" ++ fromMaybe "1~autogen1" mayRev
+             ]
+
 
 run :: String -> [String] -> IO ()
 run cmd = rawSystem' . (cmd :)
