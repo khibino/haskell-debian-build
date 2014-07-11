@@ -17,7 +17,7 @@ module Debian.Package.Build (
 
   removeBuildDir,
 
-  setupDebianDir,
+  copyDebianDir, setupDebianDir,
 
   rsyncGenOrigSources,
   rsyncGenNativeSources,
@@ -40,7 +40,7 @@ import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package)
 import Debian.Package.Command
-  (pwd, chdir, confirmPath, renameFile, renameDirectory, unpack, packInDir')
+  (pwd, chdir, confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian)
 import qualified Debian.Package.Cabal as Cabal
 
 
@@ -72,10 +72,11 @@ data Config =
   Config
   { buildDir         :: BuildDir
   , mayDebianDirName :: Maybe FilePath
+  , callCabalDebian  :: Bool              -- ^ Call cabal-debian when hackage case
   } deriving Show
 
 defaultConfig :: Config
-defaultConfig =  Config (buildDirRelative ".deb-build") Nothing
+defaultConfig =  Config (buildDirRelative ".deb-build") Nothing True
 
 type Build = ReaderT BaseDir (ReaderT Config IO)
 
@@ -136,11 +137,22 @@ sourceDir :: Package -> Build FilePath
 sourceDir pkg =
   withBuildDir $ \w -> return $ w </> sourceDirName pkg
 
-setupDebianDir :: FilePath -> Build ()
-setupDebianDir srcDir = do
+copyDebianDir :: FilePath -> Build ()
+copyDebianDir srcDir = do
   debDN       <- debianDirName
   baseDir     <- getBaseDir
   runIO $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
+
+cabalDebianDir :: Maybe String -> FilePath -> Build ()
+cabalDebianDir mayRev srcDir =
+  withCurrentDir srcDir . runIO $ cabalDebian mayRev
+
+setupDebianDir :: FilePath -> Build ()
+setupDebianDir srcDir = callCabalDebian <$> askConfig >>= setup  where
+  setup call
+    | call       =  cabalDebianDir (Just "1") srcDir
+    | otherwise  =  copyDebianDir srcDir
+
 
 rsyncGenOrigSourceDir :: Package -> Build FilePath
 rsyncGenOrigSourceDir pkg = do
@@ -159,14 +171,14 @@ rsyncGenOrigSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
   origPath  <- origArchive pkg
   withBuildDir $ runIO . packInDir' (takeFileName srcDir) origPath
-  setupDebianDir srcDir
+  copyDebianDir srcDir
   runIO $ confirmPath srcDir
   return (origPath, srcDir)
 
 rsyncGenNativeSources :: Package -> Build FilePath
 rsyncGenNativeSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
-  setupDebianDir srcDir
+  copyDebianDir srcDir
   runIO $ confirmPath srcDir
   return srcDir
 
