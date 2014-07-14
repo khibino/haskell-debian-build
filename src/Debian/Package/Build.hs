@@ -160,10 +160,16 @@ rsyncGenOrigSourceDir pkg = do
   debDN    <- debianDirName
   baseDir  <- getBaseDir
   bldDir   <- getBuildDir
-  let excludes = [takeFileName d | d <- [bldDir], baseDir `isPrefixOf` d ] ++ [debDN]
+  let excludes = [takeFileName d
+                 | d <- [bldDir]
+                 , baseDir `isPrefixOf` d ]
+                 ++ [debDN]
   runIO $ do
     createDirectoryIfMissing True $ srcDir
-    rawSystem' $ ["rsync", "-auv"] ++ [ "--exclude=" ++ e | e <- excludes] ++ [baseDir </> ".", srcDir </> "." ]
+    rawSystem'
+      $  ["rsync", "-auv"]
+      ++ ["--exclude=" ++ e | e <- excludes]
+      ++ [baseDir </> ".", srcDir </> "." ]
   return srcDir
 
 rsyncGenOrigSources :: Package -> Build (FilePath, FilePath)
