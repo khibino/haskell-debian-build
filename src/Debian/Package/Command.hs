@@ -102,7 +102,7 @@ rebuild mode opts = do
   build mode opts
 
 reinstallPackages :: [String] -> IO ()
-reinstallPackages pkgs = do
+reinstallPackages pkgs {- Need to be shell escapes -} = do
   system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
   rawSystem' ["sudo", "debi"]
 
