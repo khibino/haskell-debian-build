@@ -95,7 +95,6 @@ build mode opts = do
   let modeOpt All = []
       modeOpt Bin = ["-B"]
   debuild $ ["-uc", "-us"] ++ modeOpt mode ++ opts
-  -- debuild $ ["--no-lintian", "-uc", "-us"] ++ modeOpt mode
 
 rebuild :: BuildMode -> [String] -> IO ()
 rebuild mode opts = do
@@ -104,7 +103,6 @@ rebuild mode opts = do
 
 reinstallPackages :: [String] -> IO ()
 reinstallPackages pkgs = do
-  -- let pats = [ concat ["../", p, "_*.deb"] | p <- pkgs ]
   system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
   rawSystem' ["sudo", "debi"]
 
