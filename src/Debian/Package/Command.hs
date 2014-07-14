@@ -15,8 +15,6 @@ module Debian.Package.Command (
 
   build, rebuild,
 
-  reinstallPackages,
-
   reinstallGhcLibrary
   ) where
 
