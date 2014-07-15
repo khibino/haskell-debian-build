@@ -231,6 +231,17 @@ cabalGenOrigSources hpkg = do
   return (origPath, srcDir)
 
 
+findDebianChangeLog :: MaybeT Build FilePath
+findDebianChangeLog =  MaybeT $ do
+  baseDir  <-  getBaseDir
+  debDN    <-  debianDirName
+  let changelog = baseDir </> debDN </> "changelog"
+  runIO $ do
+    exist <- doesFileExist changelog
+    return $ if exist
+             then Just changelog
+             else Nothing
+
 findDotCabal :: MaybeT Build FilePath
 findDotCabal =  MaybeT $ do
   baseDir  <-  getBaseDir
@@ -242,17 +253,6 @@ findDotCabal =  MaybeT $ do
           | otherwise                    =  return False
           where suf = ".cabal"
     fmap (baseDir </>) . listToMaybe <$> filterM find fs
-
-findDebianChangeLog :: MaybeT Build FilePath
-findDebianChangeLog =  MaybeT $ do
-  baseDir  <-  getBaseDir
-  debDN    <-  debianDirName
-  let changelog = baseDir </> debDN </> "changelog"
-  runIO $ do
-    exist <- doesFileExist changelog
-    return $ if exist
-             then Just changelog
-             else Nothing
 
 mayBuild :: MaybeT Build a -> BaseDir -> Config -> IO (Maybe a)
 mayBuild =  runBuild . runMaybeT
