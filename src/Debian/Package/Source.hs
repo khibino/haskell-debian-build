@@ -142,12 +142,6 @@ deriveHackageVersion =  d . versionBranch . origVersion where
   d [v0, v1, v2, v3] = Just $ mkHackageVersion v0 v1 v2 v3
   d _                = Nothing
 
-debianDir :: FilePath
-debianDir =  "debian"
-
-debianChangelogPath :: FilePath
-debianChangelogPath =  debianDir </> "changelog"
-
 packageFromChangeLog :: String        -- ^ Debian changelog string
                      -> Maybe Package -- ^ Package structure
 packageFromChangeLog log' = do
@@ -162,9 +156,8 @@ packageFromChangeLog log' = do
       dverS <- lookup' "Version:"
       readMaybe' dverS
 
-parsePackageFromChangeLog :: Maybe FilePath -> IO Package
-parsePackageFromChangeLog mayCPath =  do
-  let cpath = fromMaybe debianChangelogPath mayCPath
+parsePackageFromChangeLog :: FilePath -> IO Package
+parsePackageFromChangeLog cpath =  do
   str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
   maybe (fail $ "parsePackageFromChangeLog: failed: " ++ str) return
     $ packageFromChangeLog str
