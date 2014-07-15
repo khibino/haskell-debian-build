@@ -169,7 +169,7 @@ rsyncGenOrigSourceDir pkg = do
                  , baseDir `isPrefixOf` d ]
                  ++ [debDN]
   runIO $ do
-    createDirectoryIfMissing True $ srcDir
+    createDirectoryIfMissing True srcDir
     rawSystem'
       $  ["rsync", "-auv"]
       ++ ["--exclude=" ++ e | e <- excludes]
