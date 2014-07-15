@@ -226,7 +226,7 @@ cabalGenOrigSources hpkg = do
     renameDirectory
       (takeDirectory origPath </> hackageLongName (hackage hpkg))
       srcDir
-  setupDebianDir srcDir
+  copyDebianDir srcDir
   runIO $ confirmPath srcDir
   return (origPath, srcDir)
 
