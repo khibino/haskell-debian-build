@@ -9,14 +9,14 @@ module Debian.Package.Source (
   HaskellPackage, hackage, package, haskellPackageDefault
   ) where
 
-import Data.Maybe (listToMaybe, fromMaybe)
+import Data.Maybe (listToMaybe)
 import Control.Arrow (second)
 import Control.Monad (ap, MonadPlus, mplus)
 import Numeric (readDec)
 import Data.Char (isSpace)
 import Data.Version (Version (Version, versionBranch), showVersion, parseVersion)
 import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
-import System.FilePath ((</>), (<.>))
+import System.FilePath ((<.>))
 
 import Debian.Package.Internal (tarGz, debianNamesFromSourceName, readProcess')
 import Debian.Package.Hackage
