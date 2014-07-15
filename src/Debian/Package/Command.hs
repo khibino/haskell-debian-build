@@ -72,7 +72,7 @@ pdir `packInDir` wdir =
   packInDir' pdir (pdir <.> tarGz) wdir
 
 cabalDebian :: Maybe String -> IO ()
-cabalDebian mayRev = do
+cabalDebian mayRev =
   rawSystem' [ "cabal-debian"
              , "--debianize" {- for cabal-debian 1.25 -}
              , "--quilt"
