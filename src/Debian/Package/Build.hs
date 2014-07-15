@@ -27,12 +27,16 @@ module Debian.Package.Build (
   ) where
 
 import System.FilePath ((</>), takeFileName, takeDirectory)
-import System.Directory (createDirectoryIfMissing, doesDirectoryExist)
+import System.Directory
+  (createDirectoryIfMissing, getDirectoryContents,
+   doesDirectoryExist, doesFileExist)
 import Control.Applicative ((<$>))
-import Control.Monad (when)
+import Control.Monad (when, filterM)
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
-import Data.List (isPrefixOf)
+import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
+import Data.Maybe (listToMaybe, fromMaybe)
+import Data.List (isPrefixOf, isSuffixOf)
 
 import Debian.Package.Internal (rawSystem')
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
@@ -123,7 +127,7 @@ removeBuildDir = do
 debianDirName :: Build FilePath
 debianDirName =  do
   mayD <- mayDebianDirName <$> askConfig
-  return $ maybe "debian" id mayD
+  return $ fromMaybe "debian" mayD
 
 origArchive :: Package -> Build FilePath
 origArchive pkg =
@@ -223,3 +227,30 @@ cabalGenOrigSources hpkg = do
   setupDebianDir srcDir
   runIO $ confirmPath srcDir
   return (origPath, srcDir)
+
+
+findDotCabal :: MaybeT Build FilePath
+findDotCabal =  MaybeT $ do
+  baseDir  <-  getBaseDir
+  runIO $ do
+    fs  <-  getDirectoryContents baseDir
+    let find f
+          | length f > length suf  &&
+            suf `isSuffixOf` f           =  doesFileExist $ baseDir </> f
+          | otherwise                    =  return False
+          where suf = ".cabal"
+    fmap (baseDir </>) . listToMaybe <$> filterM find fs
+
+findDebianChangeLog :: MaybeT Build FilePath
+findDebianChangeLog =  MaybeT $ do
+  baseDir  <-  getBaseDir
+  debDN    <-  debianDirName
+  let changelog = baseDir </> debDN </> "changelog"
+  runIO $ do
+    exist <- doesFileExist changelog
+    return $ if exist
+             then Just changelog
+             else Nothing
+
+mayBuild :: MaybeT Build a -> BaseDir -> Config -> IO (Maybe a)
+mayBuild =  runBuild . runMaybeT
