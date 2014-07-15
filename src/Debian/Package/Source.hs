@@ -41,7 +41,7 @@ pure =  return
 --  fa <* fb = const <$> fa <*> fb
 
 (<|>) :: MonadPlus m => m a -> m a -> m a
-(<|>) = mplus
+(<|>) =  mplus
 
 infixl 3 <|>
 infixl 4 <$>, <*>, *>
