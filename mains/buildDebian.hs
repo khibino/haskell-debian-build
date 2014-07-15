@@ -10,7 +10,7 @@ import Debian.Package.Build
 setupSrcDir :: Build FilePath
 setupSrcDir =  do
   p            <- runIO $ parsePackageFromChangeLog "debian/changelog"
-  srcDir       <- rsyncGenSources p
+  (_, srcDir)  <- rsyncGenSources p
   return srcDir
 
 build :: [String] -> Build ()

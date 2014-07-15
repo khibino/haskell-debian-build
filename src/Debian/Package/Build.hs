@@ -42,7 +42,7 @@ import Debian.Package.Internal (rawSystem')
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
-   HaskellPackage, hackage, package)
+   HaskellPackage, hackage, package, parsePackageFromChangeLog)
 import Debian.Package.Command
   (pwd, chdir, confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian)
 import qualified Debian.Package.Cabal as Cabal
@@ -185,17 +185,19 @@ rsyncGenOrigSources pkg = do
   runIO $ confirmPath srcDir
   return (origPath, srcDir)
 
-rsyncGenNativeSources :: Package -> Build FilePath
+rsyncGenNativeSources :: Package -> Build (FilePath, FilePath)
 rsyncGenNativeSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
   copyDebianDir srcDir
+  nativePath <- nativeArchive pkg
+  withBuildDir $ runIO . packInDir' (takeFileName srcDir) nativePath
   runIO $ confirmPath srcDir
-  return srcDir
+  return (nativePath, srcDir)
 
-rsyncGenSources :: Package -> Build FilePath
+rsyncGenSources :: Package -> Build (FilePath, FilePath)
 rsyncGenSources pkg
   | isNative pkg = rsyncGenNativeSources pkg
-  | otherwise    = snd <$> rsyncGenOrigSources   pkg
+  | otherwise    = rsyncGenOrigSources   pkg
 
 
 cabalGenArchive :: Hackage -> Build FilePath
