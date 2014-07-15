@@ -33,7 +33,7 @@ instance Show HackageVersion where
 
 instance Read HackageVersion where
   readsPrec _ = map toH . filter h . readP_to_S parseVersion  where
-    h (Version b t, _) = length b == 4 && t == []
+    h (Version b t, _) = length b == 4 && null t
     toH (v, s) = (HackageVersion v, s)
 
 data Hackage = Hackage String HackageVersion String  deriving Show
