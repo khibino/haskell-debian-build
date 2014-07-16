@@ -18,9 +18,10 @@ import Data.Version (Version (Version, versionBranch), showVersion, parseVersion
 import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
 import System.FilePath ((<.>))
 
-import Debian.Package.Internal (tarGz, debianNamesFromSourceName, readProcess')
+import Debian.Package.Internal (tarGz, readProcess')
 import Debian.Package.Hackage
-  (HackageVersion, mkHackageVersion, hackageVersionNumbers, Hackage, mkHackageDefault)
+  (HackageVersion, mkHackageVersion, hackageVersionNumbers,
+   Hackage, mkHackageDefault, NameRule, debianNamesFromSourceName)
 
 
 -- Combinators like Applicative
@@ -171,13 +172,14 @@ hackage (HaskellPackage h _) = h
 package :: HaskellPackage -> Package
 package (HaskellPackage _ p) = p
 
-haskellPackageDefault :: String         -- ^ Hackage name string
+haskellPackageDefault :: NameRule
+                      -> String         -- ^ Hackage name string
                       -> HackageVersion -- ^ Version of hackage
                       -> Maybe String   -- ^ Debian revision String
                       -> HaskellPackage -- ^ Result structure
-haskellPackageDefault hname hver mayDevRev =
+haskellPackageDefault rule hname hver mayDevRev =
   HaskellPackage
-  (mkHackageDefault hname hver)
+  (mkHackageDefault rule hname hver)
   (mkPackage sn (versionFromHackageVersion hver mayDevRev))
   where
-    (sn, _) = debianNamesFromSourceName hname
+    (sn, _) = debianNamesFromSourceName rule hname

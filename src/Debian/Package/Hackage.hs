@@ -1,8 +1,11 @@
 
 module Debian.Package.Hackage (
   HackageVersion, mkHackageVersion, hackageVersionNumbers,
+
   Hackage, mkHackage, hackageName, hackageVersion, debianShortName,
   mkHackageDefault,
+
+  NameRule (..), debianNamesFromSourceName,
 
   hackageLongName,
 
@@ -11,11 +14,13 @@ module Debian.Package.Hackage (
   ghcLibraryBinPackages, ghcLibraryDocPackage, ghcLibraryPackages
   ) where
 
+import Data.List (stripPrefix)
+import Data.Char (toLower)
 import Data.Version (Version (Version), showVersion, parseVersion)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import System.FilePath ((</>), (<.>))
 
-import Debian.Package.Internal (tarGz, debianNamesFromSourceName)
+import Debian.Package.Internal (tarGz)
 
 
 newtype HackageVersion = HackageVersion (Version)
@@ -50,12 +55,29 @@ hackageVersion (Hackage _ v _) = v
 debianShortName :: Hackage -> String
 debianShortName (Hackage _ _ sn) = sn
 
-mkHackageDefault :: String         -- ^ Hackage name string
+mkHackageDefault :: NameRule       -- ^ Rule flag to generate names
+                 -> String         -- ^ Hackage name string
                  -> HackageVersion -- ^ Version of hackage
-                 -> Hackage
-mkHackageDefault hname hver = mkHackage hname hver short  where
-  (_ , short) = debianNamesFromSourceName hname
+                 -> Hackage        -- ^ Result hackage meta info
+mkHackageDefault rule hname hver = mkHackage hname hver short  where
+  (_ , short) = debianNamesFromSourceName rule hname
 
+defaultHackageSrcPrefix :: String
+defaultHackageSrcPrefix =  "haskell-"
+
+data NameRule = Suggest | Simple deriving (Eq, Show)
+
+debianNamesFromSourceName :: NameRule          -- ^ Rule flag to generate name
+                          -> String            -- ^ Debian source name or Hackage name string
+                          -> (String, String)  -- ^ Debian source package name and short name like ("haskell-src-exts", "src-exts")
+debianNamesFromSourceName rule hname = d rule  where
+  lh = map toLower hname
+  d Suggest  =  rec' ["haskell-", "haskell"]
+  d Simple   =  (defaultHackageSrcPrefix ++ lh, lh)
+  rec' []     = (defaultHackageSrcPrefix ++ lh, lh)
+  rec' (p:ps) = case stripPrefix p lh of
+    Just s  -> (lh, s)
+    Nothing -> rec' ps
 
 hackageLongName :: Hackage -> String
 hackageLongName hkg = hackageName hkg ++ '-' : show (hackageVersion hkg)
