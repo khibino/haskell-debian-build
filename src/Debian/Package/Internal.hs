@@ -1,7 +1,6 @@
 
 module Debian.Package.Internal (
   tarGz,
-  debianNamesFromSourceName,
 
   readProcess', rawSystem', system',
 
@@ -9,8 +8,6 @@ module Debian.Package.Internal (
   ) where
 
 import Control.Arrow ((&&&))
-import Data.List (stripPrefix)
-import Data.Char (toLower)
 import System.FilePath ((<.>))
 import System.IO (Handle, hPutStrLn, hFlush, stderr)
 import System.Exit (ExitCode (..))
@@ -19,18 +16,6 @@ import System.Process (readProcess, rawSystem, system)
 
 tarGz :: String
 tarGz =  "tar" <.> "gz"
-
-defaultHackageSrcPrefix :: String
-defaultHackageSrcPrefix =  "haskell-"
-
-debianNamesFromSourceName :: String           -- ^ Debian source name or Hackage name string
-                          -> (String, String) -- ^ Debian source package name and short name like ("haskell-src-exts", "src-exts")
-debianNamesFromSourceName hname = rec' ["haskell-", "haskell"]  where
-  lh = map toLower hname
-  rec' []     = (defaultHackageSrcPrefix ++ lh, lh)
-  rec' (p:ps) = case stripPrefix p lh of
-    Just s  -> (lh, s)
-    Nothing -> rec' ps
 
 trace' :: Handle -> Char -> String -> IO ()
 trace' fh pc s = do
