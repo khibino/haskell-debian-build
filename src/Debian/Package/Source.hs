@@ -6,7 +6,7 @@ module Debian.Package.Source (
   origArchiveName, nativeArchiveName, sourceDirName, deriveHackageVersion,
   packageFromChangeLog, parsePackageFromChangeLog,
 
-  HaskellPackage, hackage, package, haskellPackageDefault
+  HaskellPackage, hackage, package, haskellPackageDefault, haskellPackageFromPackage
   ) where
 
 import Data.Maybe (listToMaybe)
@@ -21,7 +21,7 @@ import System.FilePath ((<.>))
 import Debian.Package.Internal (tarGz, readProcess')
 import Debian.Package.Hackage
   (HackageVersion, mkHackageVersion, hackageVersionNumbers,
-   Hackage, mkHackageDefault, NameRule, debianNamesFromSourceName)
+   Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
 
 
 -- Combinators like Applicative
@@ -143,7 +143,7 @@ deriveHackageVersion =  d . versionBranch . origVersion where
   d [v0, v1, v2, v3] = Just $ mkHackageVersion v0 v1 v2 v3
   d _                = Nothing
 
-packageFromChangeLog :: String        -- ^ Debian changelog string
+packageFromChangeLog :: String        -- ^ dpkg-parsechangelog result string
                      -> Maybe Package -- ^ Package structure
 packageFromChangeLog log' = do
   deb  <- mayDebSrc
@@ -183,3 +183,11 @@ haskellPackageDefault rule hname hver mayDevRev =
   (mkPackage sn (versionFromHackageVersion hver mayDevRev))
   where
     (sn, _) = debianNamesFromSourceName rule hname
+
+haskellPackageFromPackage :: String               -- ^ Hackage name string
+                          -> Package              -- ^ Debian package meta info
+                          -> Maybe HaskellPackage -- ^ Result
+haskellPackageFromPackage hname pkg = do
+  hv <- deriveHackageVersion pkg
+  let hkg = mkHackageDefault Simple hname hv
+  return $ HaskellPackage hkg pkg
