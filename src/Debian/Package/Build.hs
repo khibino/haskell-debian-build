@@ -23,7 +23,9 @@ module Debian.Package.Build (
   rsyncGenNativeSources,
   rsyncGenSources,
 
-  cabalGenOrigSources
+  cabalGenOrigSources,
+  cabalGenSources,
+  cabalAutogenSources
   ) where
 
 import System.FilePath ((</>), takeFileName, takeDirectory)
@@ -42,7 +44,7 @@ import Debian.Package.Internal (rawSystem')
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
-   HaskellPackage, hackage, package, parsePackageFromChangeLog)
+   HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
 import Debian.Package.Command
   (pwd, chdir, confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian)
 import qualified Debian.Package.Cabal as Cabal
@@ -226,9 +228,37 @@ cabalGenOrigSources hpkg = do
     renameDirectory
       (takeDirectory origPath </> hackageLongName (hackage hpkg))
       srcDir
-  copyDebianDir srcDir
   runIO $ confirmPath srcDir
   return (origPath, srcDir)
+
+cabalGenSources :: HaskellPackage -> Build ()
+cabalGenSources hpkg = do
+  (_orig, srcDir) <- cabalGenOrigSources hpkg
+  copyDebianDir srcDir
+
+cabalAutogenDebianDir :: Build FilePath
+cabalAutogenDebianDir = do
+  baseDir  <-  getBaseDir
+  let ddName =  "debian"
+      tmpDD  =  baseDir </> ddName
+  exist <- runIO $ doesDirectoryExist tmpDD
+  when exist (fail $ "Invalid state: directory already exist: " ++ tmpDD)
+  bldDir   <-  getBuildDir
+
+  runIO $ createDirectoryIfMissing True bldDir
+  cabalDebianDir Nothing baseDir
+  runIO $ renameFile tmpDD bldDir
+  return $ bldDir </> ddName
+
+cabalAutogenSources :: String -> Build ()
+cabalAutogenSources hname = do
+  debDir   <-  cabalAutogenDebianDir
+  pkg      <-  runIO . parsePackageFromChangeLog $ debDir </> "changelog"
+  hpkg     <-  maybe (fail "Fail to prepare haskell package meta info") return
+               $ haskellPackageFromPackage hname pkg
+  (_orig, srcDir)  <-  cabalGenOrigSources hpkg
+  bldDir   <-  getBuildDir
+  runIO $ renameDirectory (bldDir </> "debian") srcDir
 
 
 findDebianChangeLog :: MaybeT Build FilePath
