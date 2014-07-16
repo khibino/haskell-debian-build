@@ -25,7 +25,7 @@ defaultHackageSrcPrefix =  "haskell-"
 
 debianNamesFromSourceName :: String           -- ^ Debian source name or Hackage name string
                           -> (String, String) -- ^ Debian source package name and short name like ("haskell-src-exts", "src-exts")
-debianNamesFromSourceName hname = rec' ["haskell-", "haskell", "hs-", "hs"]  where
+debianNamesFromSourceName hname = rec' ["haskell-", "haskell"]  where
   lh = map toLower hname
   rec' []     = (defaultHackageSrcPrefix ++ lh, lh)
   rec' (p:ps) = case stripPrefix p lh of
