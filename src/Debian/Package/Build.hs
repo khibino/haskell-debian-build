@@ -239,12 +239,14 @@ cabalAutogenDebianDir = do
       tmpDD  =  baseDir </> ddName
   exist <- runIO $ doesDirectoryExist tmpDD
   when exist (fail $ "Invalid state: directory already exist: " ++ tmpDD)
-  bldDir   <-  getBuildDir
 
-  runIO $ createDirectoryIfMissing True bldDir
   cabalDebianDir Nothing baseDir
-  runIO $ renameDirectory tmpDD bldDir
-  return $ bldDir </> ddName
+
+  debDir   <-  (</> ddName) <$> getBuildDir
+  runIO $ do
+    createDirectoryIfMissing True $ takeDirectory debDir
+    renameDirectory tmpDD debDir
+  return debDir
 
 cabalAutogenSources :: String -> Build (FilePath, FilePath)
 cabalAutogenSources hname = do
@@ -252,8 +254,7 @@ cabalAutogenSources hname = do
   pkg      <-  runIO . parsePackageFromChangeLog $ debDir </> "changelog"
   hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
-  bldDir   <-  getBuildDir
-  runIO $ renameDirectory (bldDir </> "debian") srcDir
+  runIO $ renameDirectory debDir (srcDir </> takeFileName debDir)
   return pair
 
 
