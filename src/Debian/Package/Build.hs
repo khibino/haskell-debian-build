@@ -255,8 +255,7 @@ cabalAutogenSources :: String -> Build (FilePath, FilePath)
 cabalAutogenSources hname = do
   debDir   <-  cabalAutogenDebianDir
   pkg      <-  runIO . parsePackageFromChangeLog $ debDir </> "changelog"
-  hpkg     <-  maybe (fail "Fail to prepare haskell package meta info") return
-               $ haskellPackageFromPackage hname pkg
+  hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
   bldDir   <-  getBuildDir
   runIO $ renameDirectory (bldDir </> "debian") srcDir
