@@ -201,7 +201,7 @@ cabalGenArchive :: Hackage -> Build FilePath
 cabalGenArchive hkg = do
   withBaseCurrentDir . runIO $ Cabal.sdist []
   baseDir <- getBaseDir
-  let apath = baseDir </> "dist" </> hackageArchive hkg
+  let apath = baseDir </> hackageArchive hkg
   runIO $ confirmPath apath
   return apath
 
@@ -243,7 +243,7 @@ cabalAutogenDebianDir = do
 
   runIO $ createDirectoryIfMissing True bldDir
   cabalDebianDir Nothing baseDir
-  runIO $ renameFile tmpDD bldDir
+  runIO $ renameDirectory tmpDD bldDir
   return $ bldDir </> ddName
 
 cabalAutogenSources :: String -> Build (FilePath, FilePath)
