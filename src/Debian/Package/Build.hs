@@ -231,10 +231,11 @@ cabalGenOrigSources hpkg = do
   runIO $ confirmPath srcDir
   return (origPath, srcDir)
 
-cabalGenSources :: HaskellPackage -> Build ()
+cabalGenSources :: HaskellPackage -> Build (FilePath, FilePath)
 cabalGenSources hpkg = do
-  (_orig, srcDir) <- cabalGenOrigSources hpkg
+  pair@(_, srcDir) <- cabalGenOrigSources hpkg
   copyDebianDir srcDir
+  return pair
 
 cabalAutogenDebianDir :: Build FilePath
 cabalAutogenDebianDir = do
@@ -250,15 +251,16 @@ cabalAutogenDebianDir = do
   runIO $ renameFile tmpDD bldDir
   return $ bldDir </> ddName
 
-cabalAutogenSources :: String -> Build ()
+cabalAutogenSources :: String -> Build (FilePath, FilePath)
 cabalAutogenSources hname = do
   debDir   <-  cabalAutogenDebianDir
   pkg      <-  runIO . parsePackageFromChangeLog $ debDir </> "changelog"
   hpkg     <-  maybe (fail "Fail to prepare haskell package meta info") return
                $ haskellPackageFromPackage hname pkg
-  (_orig, srcDir)  <-  cabalGenOrigSources hpkg
+  pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
   bldDir   <-  getBuildDir
   runIO $ renameDirectory (bldDir </> "debian") srcDir
+  return pair
 
 
 findDebianChangeLog :: MaybeT Build FilePath
