@@ -32,15 +32,14 @@ module Debian.Package.Build (
 
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
 import System.Directory
-  (createDirectoryIfMissing, getDirectoryContents,
-   doesDirectoryExist, doesFileExist)
+  (createDirectoryIfMissing, doesDirectoryExist, doesFileExist)
 import Control.Applicative ((<$>), (<|>))
-import Control.Monad (when, filterM)
+import Control.Monad (when)
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
-import Data.Maybe (listToMaybe, fromMaybe)
-import Data.List (isPrefixOf, isSuffixOf)
+import Data.Maybe (fromMaybe)
+import Data.List (isPrefixOf)
 
 import Debian.Package.Internal (rawSystem')
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
@@ -269,20 +268,20 @@ findDebianChangeLog =  MaybeT $ do
              then Just changelog
              else Nothing
 
-findDotCabal :: MaybeT Build FilePath
-findDotCabal =  MaybeT (getBaseDir >>= runIO . Cabal.findDescriptionFile)
+findCabalDescription :: MaybeT Build FilePath
+findCabalDescription =  MaybeT (getBaseDir >>= runIO . Cabal.findDescriptionFile)
 
 genSources :: Build (Maybe (FilePath, FilePath))
 genSources =  runMaybeT $
   do clog <- findDebianChangeLog
      pkg  <- lift . runIO $ parsePackageFromChangeLog clog
-     (do hname <- takeBaseName <$> findDotCabal
+     (do hname <- takeBaseName <$> findCabalDescription
          hpkg  <- either fail return $ haskellPackageFromPackage hname pkg
          lift $ cabalGenSources hpkg
       <|>
       do lift $ rsyncGenSources pkg)
   <|>
-  do hname <- takeBaseName <$> findDotCabal
+  do hname <- takeBaseName <$> findCabalDescription
      lift $ cabalAutogenSources hname
   <|>
   do fail "No source generate rule found."
