@@ -13,7 +13,7 @@ module Debian.Package.Build.Command (
 
   BuildMode (..),
 
-  build, rebuild,
+  buildPackage, rebuild,
 
   reinstallGhcLibrary,
 
@@ -94,8 +94,8 @@ debuild =  run "debuild"
 
 data BuildMode = All | Bin
 
-build :: BuildMode -> [String] -> IO ()
-build mode opts = do
+buildPackage :: BuildMode -> [String] -> IO ()
+buildPackage mode opts = do
   let modeOpt All = []
       modeOpt Bin = ["-B"]
   debuild $ ["-uc", "-us"] ++ modeOpt mode ++ opts
@@ -103,7 +103,7 @@ build mode opts = do
 rebuild :: BuildMode -> [String] -> IO ()
 rebuild mode opts = do
   debuild ["clean"]
-  build mode opts
+  buildPackage mode opts
 
 reinstallPackages :: [String] -> IO ()
 reinstallPackages pkgs {- Need to be shell escapes -} = do
