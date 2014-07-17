@@ -18,9 +18,9 @@ library
                      Debian.Package.Source
                      Debian.Package.Build.Monad
                      Debian.Package.Build.Command
+                     Debian.Package.Build.Cabal
                      Debian.Package.Build.Run
                      Debian.Package.Build
-                     Debian.Package.Cabal
                      Debian.Package.Hackage
 
   other-modules:

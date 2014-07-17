@@ -38,7 +38,7 @@ import Debian.Package.Build.Monad (Build, runIO, Config (..), askConfig)
 import Debian.Package.Build.Command
   (confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian, withCurrentDir,
    getBaseDir, withBaseCurrentDir, getBuildDir, withBuildDir)
-import qualified Debian.Package.Cabal as Cabal
+import qualified Debian.Package.Build.Cabal as Cabal
 
 
 removeBuildDir :: Build ()

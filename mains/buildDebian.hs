@@ -11,7 +11,7 @@ build opts = do
   removeBuildDir
   mayS <- genSources
   case mayS of
-    Just (_, dir) -> withCurrentDir dir . runIO $ Command.build All opts
+    Just (_, dir) -> withCurrentDir dir . runIO $ Command.buildPackage All opts
     Nothing       -> fail "Illegal state: genSources"
 
 main :: IO ()

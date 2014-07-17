@@ -1,4 +1,4 @@
-module Debian.Package.Cabal (
+module Debian.Package.Build.Cabal (
   findDescriptionFile,
   parsePackageDescription,
   hackageLongName,
