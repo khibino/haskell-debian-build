@@ -25,14 +25,16 @@ module Debian.Package.Build (
 
   cabalGenOrigSources,
   cabalGenSources,
-  cabalAutogenSources
+  cabalAutogenSources,
+
+  genSources
   ) where
 
-import System.FilePath ((</>), takeFileName, takeDirectory)
+import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
 import System.Directory
   (createDirectoryIfMissing, getDirectoryContents,
    doesDirectoryExist, doesFileExist)
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), (<|>))
 import Control.Monad (when, filterM)
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
@@ -285,5 +287,17 @@ findDotCabal =  MaybeT $ do
           where suf = ".cabal"
     fmap (baseDir </>) . listToMaybe <$> filterM find fs
 
-mayBuild :: MaybeT Build a -> BaseDir -> Config -> IO (Maybe a)
-mayBuild =  runBuild . runMaybeT
+genSources :: Build (Maybe (FilePath, FilePath))
+genSources =  runMaybeT $
+  do clog <- findDebianChangeLog
+     pkg  <- lift . runIO $ parsePackageFromChangeLog clog
+     (do hname <- takeBaseName <$> findDotCabal
+         hpkg  <- either fail return $ haskellPackageFromPackage hname pkg
+         lift $ cabalGenSources hpkg
+      <|>
+      do lift $ rsyncGenSources pkg)
+  <|>
+  do hname <- takeBaseName <$> findDotCabal
+     lift $ cabalAutogenSources hname
+  <|>
+  do fail "No source generate rule found."
