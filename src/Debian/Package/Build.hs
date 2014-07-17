@@ -17,7 +17,7 @@ module Debian.Package.Build (
 
   removeBuildDir,
 
-  copyDebianDir, setupDebianDir,
+  copyDebianDir, cabalDebianDir,
 
   rsyncGenOrigSources,
   rsyncGenNativeSources,
@@ -80,11 +80,10 @@ data Config =
   Config
   { buildDir         :: BuildDir
   , mayDebianDirName :: Maybe FilePath
-  , callCabalDebian  :: Bool              -- ^ Call cabal-debian when hackage case
   } deriving Show
 
 defaultConfig :: Config
-defaultConfig =  Config (buildDirRelative ".deb-build") Nothing True
+defaultConfig =  Config (buildDirRelative ".deb-build") Nothing
 
 type Build = ReaderT BaseDir (ReaderT Config IO)
 
@@ -154,12 +153,6 @@ copyDebianDir srcDir = do
 cabalDebianDir :: Maybe String -> FilePath -> Build ()
 cabalDebianDir mayRev srcDir =
   withCurrentDir srcDir . runIO $ cabalDebian mayRev
-
-setupDebianDir :: FilePath -> Build ()
-setupDebianDir srcDir = callCabalDebian <$> askConfig >>= setup  where
-  setup call
-    | call       =  cabalDebianDir (Just "1") srcDir
-    | otherwise  =  copyDebianDir srcDir
 
 
 rsyncGenOrigSourceDir :: Package -> Build FilePath
