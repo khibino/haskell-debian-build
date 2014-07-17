@@ -184,10 +184,11 @@ haskellPackageDefault rule hname hver mayDevRev =
   where
     (sn, _) = debianNamesFromSourceName rule hname
 
-haskellPackageFromPackage :: String               -- ^ Hackage name string
-                          -> Package              -- ^ Debian package meta info
-                          -> Maybe HaskellPackage -- ^ Result
+haskellPackageFromPackage :: String                       -- ^ Hackage name string
+                          -> Package                      -- ^ Debian package meta info
+                          -> Either String HaskellPackage -- ^ Result
 haskellPackageFromPackage hname pkg = do
-  hv <- deriveHackageVersion pkg
+  hv <- maybe (Left "Fail to derive hackage version") Right
+        $ deriveHackageVersion pkg
   let hkg = mkHackageDefault Simple hname hv
   return $ HaskellPackage hkg pkg
