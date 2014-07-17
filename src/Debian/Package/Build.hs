@@ -31,7 +31,6 @@ import System.Directory
 import Control.Applicative ((<$>), (<|>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (MonadTrans (..))
-import Control.Monad.Trans.Reader (ask)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.Maybe (fromMaybe)
 import Data.List (isPrefixOf)
@@ -42,36 +41,12 @@ import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
 import Debian.Package.Build.Monad
-  (Build, runIO, unBaseDir, Config (..), askConfig, unBuildDir,
-   baseDirCurrent, defaultConfig, runBuild)
+  (Build, runIO, Config (..), askConfig, baseDirCurrent, defaultConfig, runBuild)
 import Debian.Package.Command
-  (pwd, chdir, confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian)
+  (confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian, withCurrentDir,
+   getBaseDir, withBaseCurrentDir, getBuildDir, withBuildDir)
 import qualified Debian.Package.Cabal as Cabal
 
-
-withCurrentDir :: FilePath -> Build a -> Build a
-withCurrentDir dir act = do
-  saveDir <- runIO pwd
-  runIO $ chdir dir
-  r <- act
-  runIO $ chdir saveDir
-  return r
-
-getBaseDir :: Build FilePath
-getBaseDir =  ask >>= maybe (runIO pwd) return . unBaseDir
-
-withBaseCurrentDir :: Build a -> Build a
-withBaseCurrentDir act = do
-  baseDir <- getBaseDir
-  withCurrentDir baseDir act
-
-getBuildDir :: Build FilePath
-getBuildDir = do
-  bd <- buildDir <$> askConfig
-  (`unBuildDir` bd) <$> getBaseDir
-
-withBuildDir :: (FilePath -> Build a) -> Build a
-withBuildDir f = getBuildDir >>= f
 
 removeBuildDir :: Build ()
 removeBuildDir = do

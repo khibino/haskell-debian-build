@@ -15,7 +15,12 @@ module Debian.Package.Command (
 
   build, rebuild,
 
-  reinstallGhcLibrary
+  reinstallGhcLibrary,
+
+  withCurrentDir,
+
+  getBaseDir, withBaseCurrentDir,
+  getBuildDir, withBuildDir
   ) where
 
 import Data.Maybe (fromMaybe)
@@ -26,6 +31,7 @@ import qualified System.Directory as D
 import Debian.Package.Internal
   (tarGz, readProcess', rawSystem', system', traceCommand, traceOut)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
+import Debian.Package.Build.Monad (Build, runIO, askBaseDir, askBuildDir)
 
 
 chdir :: String -> IO ()
@@ -108,3 +114,25 @@ reinstallGhcLibrary :: BuildMode -> Hackage -> IO ()
 reinstallGhcLibrary mode = reinstallPackages . pkgs mode where
   pkgs All = ghcLibraryBinPackages
   pkgs Bin = ghcLibraryPackages
+
+withCurrentDir :: FilePath -> Build a -> Build a
+withCurrentDir dir act = do
+  saveDir <- runIO pwd
+  runIO $ chdir dir
+  r <- act
+  runIO $ chdir saveDir
+  return r
+
+getBaseDir :: Build FilePath
+getBaseDir =  runIO pwd >>= askBaseDir
+
+withBaseCurrentDir :: Build a -> Build a
+withBaseCurrentDir act = do
+  baseDir <- getBaseDir
+  withCurrentDir baseDir act
+
+getBuildDir :: Build FilePath
+getBuildDir =  runIO pwd >>= askBuildDir
+
+withBuildDir :: (FilePath -> Build a) -> Build a
+withBuildDir f = getBuildDir >>= f

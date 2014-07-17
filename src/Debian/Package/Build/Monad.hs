@@ -1,8 +1,10 @@
 
 module Debian.Package.Build.Monad
-       ( BaseDir, baseDirCurrent, baseDirSpecify, unBaseDir
+       ( BaseDir, baseDirCurrent, baseDirSpecify
 
-       , BuildDir, buildDirRelative, buildDirAbsolute, unBuildDir
+       , askBaseDir, askBuildDir
+
+       , BuildDir, buildDirRelative, buildDirAbsolute
 
        , Config, defaultConfig, buildDir, mayDebianDirName
 
@@ -10,6 +12,7 @@ module Debian.Package.Build.Monad
        ) where
 
 import System.FilePath ((</>))
+import Control.Applicative ((<$>))
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 
@@ -55,5 +58,13 @@ runIO =  lift . lift
 runBuild :: Build a -> BaseDir -> Config -> IO a
 runBuild b =  runReaderT . runReaderT b
 
+askBaseDir :: FilePath -> Build FilePath
+askBaseDir cur = ask >>= return . maybe cur id . unBaseDir
+
 askConfig :: Build Config
 askConfig =  lift ask
+
+askBuildDir :: FilePath -> Build FilePath
+askBuildDir cur = do
+  bd <- buildDir <$> askConfig
+  (`unBuildDir` bd) <$> askBaseDir cur
