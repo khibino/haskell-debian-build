@@ -270,16 +270,7 @@ findDebianChangeLog =  MaybeT $ do
              else Nothing
 
 findDotCabal :: MaybeT Build FilePath
-findDotCabal =  MaybeT $ do
-  baseDir  <-  getBaseDir
-  runIO $ do
-    fs  <-  getDirectoryContents baseDir
-    let find f
-          | length f > length suf  &&
-            suf `isSuffixOf` f           =  doesFileExist $ baseDir </> f
-          | otherwise                    =  return False
-          where suf = ".cabal"
-    fmap (baseDir </>) . listToMaybe <$> filterM find fs
+findDotCabal =  MaybeT (getBaseDir >>= runIO . Cabal.findDescriptionFile)
 
 genSources :: Build (Maybe (FilePath, FilePath))
 genSources =  runMaybeT $
