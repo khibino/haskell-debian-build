@@ -2,14 +2,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Debian.Package.Build (
-  BaseDir, baseDirCurrent, baseDirSpecify,
-  BuildDir, buildDirRelative, buildDirAbsolute,
+  baseDirCurrent, defaultConfig, Build, runBuild, runIO,
 
-  Config, buildDir,
-
-  mayDebianDirName, defaultConfig,
-
-  Build, runIO, runBuild, withCurrentDir,
+  withCurrentDir,
 
   getBaseDir, withBaseCurrentDir,
 
@@ -36,7 +31,7 @@ import System.Directory
 import Control.Applicative ((<$>), (<|>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (MonadTrans (..))
-import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.Trans.Reader (ask)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.Maybe (fromMaybe)
 import Data.List (isPrefixOf)
@@ -46,51 +41,13 @@ import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
+import Debian.Package.Build.Monad
+  (Build, runIO, unBaseDir, Config (..), askConfig, unBuildDir,
+   baseDirCurrent, defaultConfig, runBuild)
 import Debian.Package.Command
   (pwd, chdir, confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian)
 import qualified Debian.Package.Cabal as Cabal
 
-
-newtype BaseDir = BaseDir { unBaseDir :: Maybe FilePath }
-
-baseDirCurrent :: BaseDir
-baseDirCurrent =  BaseDir Nothing
-
-baseDirSpecify :: FilePath -> BaseDir
-baseDirSpecify =  BaseDir . Just
-
-newtype BuildDir = BuildDir (Either FilePath FilePath)
-
-buildDirRelative :: FilePath -> BuildDir
-buildDirRelative = BuildDir . Left
-
-buildDirAbsolute :: FilePath -> BuildDir
-buildDirAbsolute = BuildDir . Right
-
-unBuildDir :: FilePath -> BuildDir -> FilePath
-unBuildDir base (BuildDir b) = either (base </>) id b
-
-instance Show BuildDir where
-  show = d  where
-    d (BuildDir (Left  p)) = "Relative " ++ p
-    d (BuildDir (Right p)) = "Absolute " ++ p
-
-data Config =
-  Config
-  { buildDir         :: BuildDir
-  , mayDebianDirName :: Maybe FilePath
-  } deriving Show
-
-defaultConfig :: Config
-defaultConfig =  Config (buildDirRelative ".deb-build") Nothing
-
-type Build = ReaderT BaseDir (ReaderT Config IO)
-
-runIO :: IO a -> Build a
-runIO =  lift . lift
-
-runBuild :: Build a -> BaseDir -> Config -> IO a
-runBuild b =  runReaderT . runReaderT b
 
 withCurrentDir :: FilePath -> Build a -> Build a
 withCurrentDir dir act = do
@@ -102,9 +59,6 @@ withCurrentDir dir act = do
 
 getBaseDir :: Build FilePath
 getBaseDir =  ask >>= maybe (runIO pwd) return . unBaseDir
-
-askConfig :: Build Config
-askConfig =  lift ask
 
 withBaseCurrentDir :: Build a -> Build a
 withBaseCurrentDir act = do

@@ -16,6 +16,7 @@ cabal-version:       >=1.8
 library
   exposed-modules:
                      Debian.Package.Source
+                     Debian.Package.Build.Monad
                      Debian.Package.Command
                      Debian.Package.Build
                      Debian.Package.Cabal
