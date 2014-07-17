@@ -1,5 +1,5 @@
 
-module Debian.Package.Command (
+module Debian.Package.Build.Command (
   chdir, pwd,
   renameDirectory, renameFile,
 

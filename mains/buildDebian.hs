@@ -1,7 +1,7 @@
 import System.Environment (getArgs)
 
-import Debian.Package.Command (BuildMode (All))
-import qualified Debian.Package.Command as Command
+import Debian.Package.Build.Command (BuildMode (All))
+import qualified Debian.Package.Build.Command as Command
 import Debian.Package.Build
   (baseDirCurrent, defaultConfig, Build, runBuild, runIO,
    withCurrentDir, removeBuildDir, genSources)

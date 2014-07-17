@@ -17,7 +17,7 @@ library
   exposed-modules:
                      Debian.Package.Source
                      Debian.Package.Build.Monad
-                     Debian.Package.Command
+                     Debian.Package.Build.Command
                      Debian.Package.Build
                      Debian.Package.Cabal
                      Debian.Package.Hackage

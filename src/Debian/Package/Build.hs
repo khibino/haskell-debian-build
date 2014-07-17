@@ -42,7 +42,7 @@ import Debian.Package.Source
    HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
 import Debian.Package.Build.Monad
   (Build, runIO, Config (..), askConfig, baseDirCurrent, defaultConfig, runBuild)
-import Debian.Package.Command
+import Debian.Package.Build.Command
   (confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian, withCurrentDir,
    getBaseDir, withBaseCurrentDir, getBuildDir, withBuildDir)
 import qualified Debian.Package.Cabal as Cabal
