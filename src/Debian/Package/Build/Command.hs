@@ -25,7 +25,7 @@ module Debian.Package.Build.Command (
 
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
-
+import Control.Monad (when)
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
 
@@ -39,9 +39,7 @@ import Debian.Package.Build.Monad
 traceBuild :: IO () -> Build ()
 traceBuild printIO = do
  t <- trace <$> askConfig
- if t
-   then runIO printIO
-   else return ()
+ when t $ runIO printIO
 
 traceCommand :: String -> Build ()
 traceCommand =  traceBuild . traceCommandIO
