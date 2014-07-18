@@ -6,7 +6,7 @@ module Debian.Package.Build.Monad
 
        , BuildDir, buildDirRelative, buildDirAbsolute
 
-       , Config, defaultConfig, buildDir, mayDebianDirName
+       , Config, defaultConfig, buildDir, mayDebianDirName, trace
 
        , Build, runIO, runBuild, askConfig
        ) where
@@ -45,10 +45,11 @@ data Config =
   Config
   { buildDir         :: BuildDir
   , mayDebianDirName :: Maybe FilePath
+  , trace            :: Bool
   } deriving Show
 
 defaultConfig :: Config
-defaultConfig =  Config (buildDirRelative ".deb-build") Nothing
+defaultConfig =  Config (buildDirRelative ".deb-build") Nothing True
 
 type Build = ReaderT BaseDir (ReaderT Config IO)
 
