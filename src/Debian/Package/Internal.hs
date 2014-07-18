@@ -46,7 +46,6 @@ handleExit cmd = d  where
 
 rawSystem' :: [String] -> IO ()
 rawSystem' cmd0 = do
-  traceCommandIO $ unwords cmd0
   let (cmd, args) = splitCommand cmd0
   rawSystem cmd args >>= handleExit cmd
 

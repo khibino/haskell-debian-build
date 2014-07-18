@@ -73,7 +73,7 @@ copyDebianDir srcDir = do
 
 cabalDebianDir :: Maybe String -> FilePath -> Build ()
 cabalDebianDir mayRev srcDir =
-  withCurrentDir srcDir . runIO $ cabalDebian mayRev
+  withCurrentDir srcDir $ cabalDebian mayRev
 
 
 rsyncGenOrigSourceDir :: Package -> Build FilePath

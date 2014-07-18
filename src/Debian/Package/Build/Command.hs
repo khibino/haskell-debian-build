@@ -100,40 +100,40 @@ packInDir :: FilePath -> FilePath -> Build ()
 pdir `packInDir` wdir =
   packInDir' pdir (pdir <.> tarGz) wdir
 
-cabalDebian :: Maybe String -> IO ()
+cabalDebian :: Maybe String -> Build ()
 cabalDebian mayRev =
-  rawSystem' [ "cabal-debian"
-             , "--debianize" {- for cabal-debian 1.25 -}
-             , "--quilt"
-             , "--revision=" ++ fromMaybe "1~autogen1" mayRev
-             ]
+  rawSystem [ "cabal-debian"
+            , "--debianize" {- for cabal-debian 1.25 -}
+            , "--quilt"
+            , "--revision=" ++ fromMaybe "1~autogen1" mayRev
+            ]
 
 
-run :: String -> [String] -> IO ()
-run cmd = rawSystem' . (cmd :)
+run :: String -> [String] -> Build ()
+run cmd = rawSystem . (cmd :)
 
-debuild :: [String] -> IO ()
+debuild :: [String] -> Build ()
 debuild =  run "debuild"
 
 data BuildMode = All | Bin
 
-buildPackage :: BuildMode -> [String] -> IO ()
+buildPackage :: BuildMode -> [String] -> Build ()
 buildPackage mode opts = do
   let modeOpt All = []
       modeOpt Bin = ["-B"]
   debuild $ ["-uc", "-us"] ++ modeOpt mode ++ opts
 
-rebuild :: BuildMode -> [String] -> IO ()
+rebuild :: BuildMode -> [String] -> Build ()
 rebuild mode opts = do
   debuild ["clean"]
   buildPackage mode opts
 
-reinstallPackages :: [String] -> IO ()
+reinstallPackages :: [String] -> Build ()
 reinstallPackages pkgs {- Need to be shell escapes -} = do
-  system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
-  rawSystem' ["sudo", "debi"]
+  runIO . system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
+  rawSystem ["sudo", "debi"]
 
-reinstallGhcLibrary :: BuildMode -> Hackage -> IO ()
+reinstallGhcLibrary :: BuildMode -> Hackage -> Build ()
 reinstallGhcLibrary mode = reinstallPackages . pkgs mode where
   pkgs All = ghcLibraryBinPackages
   pkgs Bin = ghcLibraryPackages
