@@ -73,15 +73,15 @@ pwd =  D.getCurrentDirectory
 renameMsg :: String -> String -> String -> String
 renameMsg tag src dst = unwords ["<" ++ tag ++ "> ", src, "-->", dst]
 
-renameDirectory :: String -> String -> IO ()
+renameDirectory :: String -> String -> Build ()
 renameDirectory src dst = do
-  traceCommandIO $ renameMsg "renameDirectory" src dst
-  D.renameDirectory src dst
+  traceCommand $ renameMsg "renameDirectory" src dst
+  runIO $ D.renameDirectory src dst
 
-renameFile :: String -> String -> IO ()
+renameFile :: String -> String -> Build ()
 renameFile src dst = do
-  traceCommandIO $ renameMsg "renameFile" src dst
-  D.renameFile src dst
+  traceCommand $ renameMsg "renameFile" src dst
+  runIO $ D.renameFile src dst
 
 confirmPath :: String -> Build ()
 confirmPath path =
