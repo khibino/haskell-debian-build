@@ -26,7 +26,7 @@ import Distribution.PackageDescription.Parse (readPackageDescription)
 
 import Distribution.Simple (defaultMain)
 
-import Debian.Package.Internal (traceCommand)
+import Debian.Package.Internal (traceCommandIO)
 
 findDescriptionFile :: FilePath -> IO (Maybe FilePath)
 findDescriptionFile dir = do
@@ -56,7 +56,7 @@ _testDotCabal =  do Just path <- findDescriptionFile "."
 
 setup :: [String] -> IO ()
 setup args =  do
-  traceCommand (unwords $ "<cabal>" : args)
+  traceCommandIO (unwords $ "<cabal>" : args)
   args `withArgs` defaultMain
 
 setupCmd :: String -> [String] -> IO ()
