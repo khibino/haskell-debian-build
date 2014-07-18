@@ -12,6 +12,7 @@ module Debian.Package.Build.Monad
        ) where
 
 import System.FilePath ((</>))
+import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
@@ -60,7 +61,7 @@ runBuild :: Build a -> BaseDir -> Config -> IO a
 runBuild b =  runReaderT . runReaderT b
 
 askBaseDir :: FilePath -> Build FilePath
-askBaseDir cur = ask >>= return . maybe cur id . unBaseDir
+askBaseDir cur = fromMaybe cur . unBaseDir <$> ask
 
 askConfig :: Build Config
 askConfig =  lift ask
