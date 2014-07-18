@@ -52,6 +52,11 @@ readProcess cmd = do
   traceCommand $ unwords cmd
   runIO $ readProcess' cmd
 
+rawSystem :: [String] -> Build ()
+rawSystem cmd = do
+  traceCommand $ unwords cmd
+  runIO . rawSystem' $ cmd
+
 chdir :: String -> Build ()
 chdir dir =  do
   traceCommand $ "<setCurrentDirectory> " ++ dir
@@ -78,20 +83,20 @@ confirmPath path =
   readProcess ["ls", "-ld", path] >>= traceOut
 
 
-unpackInDir :: FilePath -> FilePath -> IO ()
+unpackInDir :: FilePath -> FilePath -> Build ()
 apath `unpackInDir` dir = do
-  putStrLn $ unwords ["Unpacking", apath, "in", dir, "."]
-  rawSystem' ["tar", "-C", dir, "-zxf", apath]
+  runIO . putStrLn $ unwords ["Unpacking", apath, "in", dir, "."]
+  rawSystem ["tar", "-C", dir, "-zxf", apath]
 
-unpack :: FilePath -> IO ()
+unpack :: FilePath -> Build ()
 unpack apath = apath `unpackInDir` takeDirectory apath
 
-packInDir' :: FilePath -> FilePath -> FilePath -> IO ()
+packInDir' :: FilePath -> FilePath -> FilePath -> Build ()
 packInDir' pdir apath wdir = do
-  putStrLn $ unwords ["Packing", pdir, "in", wdir, "into", apath, "."]
-  rawSystem' ["tar", "-C", wdir, "-zcf", apath, pdir]
+  runIO . putStrLn $ unwords ["Packing", pdir, "in", wdir, "into", apath, "."]
+  rawSystem ["tar", "-C", wdir, "-zcf", apath, pdir]
 
-packInDir :: FilePath -> FilePath -> IO ()
+packInDir :: FilePath -> FilePath -> Build ()
 pdir `packInDir` wdir =
   packInDir' pdir (pdir <.> tarGz) wdir
 
