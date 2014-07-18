@@ -47,6 +47,11 @@ traceCommand =  traceBuild . traceCommandIO
 traceOut :: String -> Build ()
 traceOut =  traceBuild . traceOutIO
 
+readProcess :: [String] -> Build String
+readProcess cmd = do
+  traceCommand $ unwords cmd
+  runIO $ readProcess' cmd
+
 chdir :: String -> Build ()
 chdir dir =  do
   traceCommand $ "<setCurrentDirectory> " ++ dir
@@ -68,9 +73,9 @@ renameFile src dst = do
   traceCommandIO $ renameMsg "renameFile" src dst
   D.renameFile src dst
 
-confirmPath :: String -> IO ()
+confirmPath :: String -> Build ()
 confirmPath path =
-  readProcess' ["ls", "-ld", path] >>= traceOutIO
+  readProcess ["ls", "-ld", path] >>= traceOut
 
 
 unpackInDir :: FilePath -> FilePath -> IO ()

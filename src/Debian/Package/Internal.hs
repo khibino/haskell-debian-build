@@ -36,7 +36,6 @@ splitCommand =  head &&& tail
 
 readProcess' :: [String] -> IO String
 readProcess' cmd0 = do
-  traceCommandIO $ unwords cmd0
   let (cmd, args) = splitCommand cmd0
   readProcess cmd args ""
 
