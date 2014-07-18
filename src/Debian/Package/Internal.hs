@@ -4,7 +4,7 @@ module Debian.Package.Internal (
 
   readProcess', rawSystem', system',
 
-  traceCommand, traceOut
+  traceCommandIO, traceOutIO
   ) where
 
 import Control.Arrow ((&&&))
@@ -25,18 +25,18 @@ trace' fh pc s = do
 trace :: Char -> String -> IO ()
 trace =  trace' stderr
 
-traceCommand :: String -> IO ()
-traceCommand =  trace '+'
+traceCommandIO :: String -> IO ()
+traceCommandIO =  trace '+'
 
-traceOut :: String -> IO ()
-traceOut =  trace '>'
+traceOutIO :: String -> IO ()
+traceOutIO =  trace '>'
 
 splitCommand :: [a] -> (a, [a])
 splitCommand =  head &&& tail
 
 readProcess' :: [String] -> IO String
 readProcess' cmd0 = do
-  traceCommand $ unwords cmd0
+  traceCommandIO $ unwords cmd0
   let (cmd, args) = splitCommand cmd0
   readProcess cmd args ""
 
@@ -47,11 +47,11 @@ handleExit cmd = d  where
 
 rawSystem' :: [String] -> IO ()
 rawSystem' cmd0 = do
-  traceCommand $ unwords cmd0
+  traceCommandIO $ unwords cmd0
   let (cmd, args) = splitCommand cmd0
   rawSystem cmd args >>= handleExit cmd
 
 system' :: String -> IO ()
 system' cmd = do
-  traceCommand cmd
+  traceCommandIO cmd
   system cmd >>= handleExit cmd

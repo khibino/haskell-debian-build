@@ -29,14 +29,14 @@ import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
 
 import Debian.Package.Internal
-  (tarGz, readProcess', rawSystem', system', traceCommand, traceOut)
+  (tarGz, readProcess', rawSystem', system', traceCommandIO, traceOutIO)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
 import Debian.Package.Build.Monad (Build, runIO, askBaseDir, askBuildDir)
 
 
 chdir :: String -> IO ()
 chdir dir =  do
-  traceCommand $ "<setCurrentDirectory> " ++ dir
+  traceCommandIO $ "<setCurrentDirectory> " ++ dir
   D.setCurrentDirectory dir
 
 pwd :: IO String
@@ -47,17 +47,17 @@ renameMsg tag src dst = unwords ["<" ++ tag ++ "> ", src, "-->", dst]
 
 renameDirectory :: String -> String -> IO ()
 renameDirectory src dst = do
-  traceCommand $ renameMsg "renameDirectory" src dst
+  traceCommandIO $ renameMsg "renameDirectory" src dst
   D.renameDirectory src dst
 
 renameFile :: String -> String -> IO ()
 renameFile src dst = do
-  traceCommand $ renameMsg "renameFile" src dst
+  traceCommandIO $ renameMsg "renameFile" src dst
   D.renameFile src dst
 
 confirmPath :: String -> IO ()
 confirmPath path =
-  readProcess' ["ls", "-ld", path] >>= traceOut
+  readProcess' ["ls", "-ld", path] >>= traceOutIO
 
 
 unpackInDir :: FilePath -> FilePath -> IO ()
