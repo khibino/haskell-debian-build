@@ -57,6 +57,11 @@ rawSystem cmd = do
   traceCommand $ unwords cmd
   runIO . rawSystem' $ cmd
 
+system :: String -> Build ()
+system cmd = do
+  traceCommand cmd
+  runIO $ system' cmd
+
 chdir :: String -> Build ()
 chdir dir =  do
   traceCommand $ "<setCurrentDirectory> " ++ dir
@@ -130,7 +135,7 @@ rebuild mode opts = do
 
 reinstallPackages :: [String] -> Build ()
 reinstallPackages pkgs {- Need to be shell escapes -} = do
-  runIO . system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
+  system $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
   rawSystem ["sudo", "debi"]
 
 reinstallGhcLibrary :: BuildMode -> Hackage -> Build ()

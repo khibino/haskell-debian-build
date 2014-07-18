@@ -50,6 +50,4 @@ rawSystem' cmd0 = do
   rawSystem cmd args >>= handleExit cmd
 
 system' :: String -> IO ()
-system' cmd = do
-  traceCommandIO cmd
-  system cmd >>= handleExit cmd
+system' cmd = system cmd >>= handleExit cmd
