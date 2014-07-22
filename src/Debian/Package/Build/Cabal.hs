@@ -11,6 +11,7 @@ module Debian.Package.Build.Cabal (
 
 import Control.Applicative ((<$>))
 import Control.Monad (filterM)
+import Control.Monad.Trans.Class (lift)
 import Data.Maybe (listToMaybe)
 import Data.List (isSuffixOf)
 import System.FilePath ((</>))
@@ -26,7 +27,7 @@ import Distribution.PackageDescription.Parse (readPackageDescription)
 
 import Distribution.Simple (defaultMain)
 
-import Debian.Package.Internal (traceCommandIO)
+import Debian.Package.Build.Monad (Trace, traceCommand)
 
 findDescriptionFile :: FilePath -> IO (Maybe FilePath)
 findDescriptionFile dir = do
@@ -54,28 +55,28 @@ _testDotCabal :: IO PackageDescription
 _testDotCabal =  do Just path <- findDescriptionFile "."
                     parsePackageDescription path
 
-setup :: [String] -> IO ()
+setup :: [String] -> Trace ()
 setup args =  do
-  traceCommandIO (unwords $ "<cabal>" : args)
-  args `withArgs` defaultMain
+  traceCommand (unwords $ "<cabal>" : args)
+  lift $ args `withArgs` defaultMain
 
-setupCmd :: String -> [String] -> IO ()
+setupCmd :: String -> [String] -> Trace ()
 setupCmd cmd = setup . (cmd : )
 
-clean :: [String] -> IO ()
+clean :: [String] -> Trace ()
 clean =  setupCmd "clean"
 
-configure :: [String] -> IO ()
+configure :: [String] -> Trace ()
 configure =  setupCmd "configure"
 
-sdist :: [String] -> IO ()
+sdist :: [String] -> Trace ()
 sdist =  setupCmd "sdist"
 
-build :: [String] -> IO ()
+build :: [String] -> Trace ()
 build =  setupCmd "build"
 
-install :: [String] -> IO ()
+install :: [String] -> Trace ()
 install =  setupCmd "install"
 
-register :: [String] -> IO ()
+register :: [String] -> Trace ()
 register =  setupCmd "register"
