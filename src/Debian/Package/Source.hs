@@ -18,10 +18,11 @@ import Data.Version (Version (Version, versionBranch), showVersion, parseVersion
 import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
 import System.FilePath ((<.>))
 
-import Debian.Package.Internal (tarGz, readProcess')
+import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage
   (HackageVersion, mkHackageVersion, hackageVersionNumbers,
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
+import Debian.Package.Build.Command (readProcess')
 
 
 -- Combinators like Applicative

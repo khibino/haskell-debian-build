@@ -20,7 +20,9 @@ module Debian.Package.Build.Command (
   withCurrentDir,
 
   getBaseDir, withBaseCurrentDir,
-  getBuildDir, withBuildDir
+  getBuildDir, withBuildDir,
+
+  readProcess', rawSystem', system'
   ) where
 
 import Data.Maybe (fromMaybe)
@@ -28,9 +30,10 @@ import Control.Applicative ((<$>))
 import Control.Monad (when)
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
+import qualified System.Process as Process
 
 import Debian.Package.Internal
-  (tarGz, readProcess', rawSystem', system', traceCommandIO, traceOutIO)
+  (tarGz, splitCommand, handleExit, traceCommandIO, traceOutIO)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
 import Debian.Package.Build.Monad
   (Build, runIO, askBaseDir, askBuildDir, askConfig, trace)
@@ -46,6 +49,19 @@ traceCommand =  traceBuild . traceCommandIO
 
 traceOut :: String -> Build ()
 traceOut =  traceBuild . traceOutIO
+
+readProcess' :: [String] -> IO String
+readProcess' cmd0 = do
+  let (cmd, args) = splitCommand cmd0
+  Process.readProcess cmd args ""
+
+rawSystem' :: [String] -> IO ()
+rawSystem' cmd0 = do
+  let (cmd, args) = splitCommand cmd0
+  Process.rawSystem cmd args >>= handleExit cmd
+
+system' :: String -> IO ()
+system' cmd = Process.system cmd >>= handleExit cmd
 
 readProcess :: [String] -> Build String
 readProcess cmd = do
