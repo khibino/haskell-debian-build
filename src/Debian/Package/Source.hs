@@ -22,6 +22,7 @@ import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage
   (HackageVersion, mkHackageVersion, hackageVersionNumbers,
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
+import Debian.Package.Build.Monad (Trace)
 import Debian.Package.Build.Command (readProcess')
 
 
@@ -158,7 +159,7 @@ packageFromChangeLog log' = do
       dverS <- lookup' "Version:"
       readMaybe' dverS
 
-parsePackageFromChangeLog :: FilePath -> IO Package
+parsePackageFromChangeLog :: FilePath -> Trace Package
 parsePackageFromChangeLog cpath =  do
   str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
   maybe (fail $ "parsePackageFromChangeLog: failed: " ++ str) return

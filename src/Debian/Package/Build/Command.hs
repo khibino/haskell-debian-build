@@ -28,6 +28,7 @@ module Debian.Package.Build.Command (
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad (when)
+import Control.Monad.Trans.Class (lift)
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
 import qualified System.Process as Process
@@ -36,7 +37,7 @@ import Debian.Package.Internal
   (tarGz, splitCommand, handleExit, traceCommandIO, traceOutIO)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
 import Debian.Package.Build.Monad
-  (Build, runIO, askBaseDir, askBuildDir, askConfig, trace)
+  (Trace, traceIO, Build, runIO, liftTrace, askBaseDir, askBuildDir, askConfig, trace)
 
 
 traceBuild :: IO () -> Build ()
@@ -44,43 +45,49 @@ traceBuild printIO = do
  t <- trace <$> askConfig
  when t $ runIO printIO
 
-traceCommand :: String -> Build ()
-traceCommand =  traceBuild . traceCommandIO
+traceCommand :: String -> Trace ()
+traceCommand =  traceIO . traceCommandIO
 
 traceOut :: String -> Build ()
 traceOut =  traceBuild . traceOutIO
 
-readProcess' :: [String] -> IO String
+readProcess' :: [String] -> Trace String
 readProcess' cmd0 = do
-  let (cmd, args) = splitCommand cmd0
-  Process.readProcess cmd args ""
+  traceCommand $ unwords cmd0
+  lift $ do
+    let (cmd, args) = splitCommand cmd0
+    Process.readProcess cmd args ""
 
-rawSystem' :: [String] -> IO ()
+rawSystem' :: [String] -> Trace ()
 rawSystem' cmd0 = do
-  let (cmd, args) = splitCommand cmd0
-  Process.rawSystem cmd args >>= handleExit cmd
+  traceCommand $ unwords cmd0
+  lift $ do
+    let (cmd, args) = splitCommand cmd0
+    Process.rawSystem cmd args >>= handleExit cmd
 
-system' :: String -> IO ()
-system' cmd = Process.system cmd >>= handleExit cmd
+system' :: String -> Trace ()
+system' cmd = do
+  traceCommand cmd
+  lift $ Process.system cmd >>= handleExit cmd
 
 readProcess :: [String] -> Build String
 readProcess cmd = do
-  traceCommand $ unwords cmd
-  runIO $ readProcess' cmd
+  -- traceCommand $ unwords cmd
+  liftTrace $ readProcess' cmd
 
 rawSystem :: [String] -> Build ()
 rawSystem cmd = do
-  traceCommand $ unwords cmd
-  runIO . rawSystem' $ cmd
+  -- traceCommand $ unwords cmd
+  liftTrace . rawSystem' $ cmd
 
 system :: String -> Build ()
 system cmd = do
-  traceCommand cmd
-  runIO $ system' cmd
+  -- traceCommand cmd
+  liftTrace $ system' cmd
 
 chdir :: String -> Build ()
 chdir dir =  do
-  traceCommand $ "<setCurrentDirectory> " ++ dir
+  liftTrace . traceCommand $ "<setCurrentDirectory> " ++ dir
   runIO $ D.setCurrentDirectory dir
 
 pwd :: IO String
@@ -91,12 +98,12 @@ renameMsg tag src dst = unwords ["<" ++ tag ++ "> ", src, "-->", dst]
 
 renameDirectory :: String -> String -> Build ()
 renameDirectory src dst = do
-  traceCommand $ renameMsg "renameDirectory" src dst
+  liftTrace . traceCommand $ renameMsg "renameDirectory" src dst
   runIO $ D.renameDirectory src dst
 
 renameFile :: String -> String -> Build ()
 renameFile src dst = do
-  traceCommand $ renameMsg "renameFile" src dst
+  liftTrace . traceCommand $ renameMsg "renameFile" src dst
   runIO $ D.renameFile src dst
 
 confirmPath :: String -> Build ()
