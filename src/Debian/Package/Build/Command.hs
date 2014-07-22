@@ -130,28 +130,31 @@ cabalDebian dir = withCurrentDir' dir . cabalDebian'
 run :: String -> [String] -> Trace ()
 run cmd = rawSystem' . (cmd :)
 
-debuild :: [String] -> Trace ()
-debuild =  run "debuild"
+debuild' :: [String] -> Trace ()
+debuild' =  run "debuild"
+
+debuild :: FilePath -> [String] -> Trace ()
+debuild dir = withCurrentDir' dir . debuild'
 
 data BuildMode = All | Bin
 
-buildPackage :: BuildMode -> [String] -> Trace ()
-buildPackage mode opts = do
+buildPackage :: FilePath -> BuildMode -> [String] -> Trace ()
+buildPackage dir mode opts = do
   let modeOpt All = []
       modeOpt Bin = ["-B"]
-  debuild $ ["-uc", "-us"] ++ modeOpt mode ++ opts
+  debuild dir $ ["-uc", "-us"] ++ modeOpt mode ++ opts
 
-rebuild :: BuildMode -> [String] -> Trace ()
-rebuild mode opts = do
-  debuild ["clean"]
-  buildPackage mode opts
+rebuild :: FilePath -> BuildMode -> [String] -> Trace ()
+rebuild dir mode opts = do
+  debuild dir ["clean"]
+  buildPackage dir mode opts
 
-reinstallPackages :: [String] -> Trace ()
-reinstallPackages pkgs {- Need to be shell escapes -} = do
+reinstallPackages :: FilePath -> [String] -> Trace ()
+reinstallPackages dir pkgs {- Need to be shell escapes -} = withCurrentDir' dir $ do
   system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
   rawSystem' ["sudo", "debi"]
 
-reinstallGhcLibrary :: BuildMode -> Hackage -> Trace ()
-reinstallGhcLibrary mode = reinstallPackages . pkgs mode where
+reinstallGhcLibrary :: FilePath -> BuildMode -> Hackage -> Trace ()
+reinstallGhcLibrary dir mode = reinstallPackages dir . pkgs mode where
   pkgs All = ghcLibraryBinPackages
   pkgs Bin = ghcLibraryPackages
