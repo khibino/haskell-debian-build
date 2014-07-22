@@ -23,7 +23,7 @@ module Debian.Package.Build (
 
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
 import System.Directory
-  (createDirectoryIfMissing, doesDirectoryExist, doesFileExist)
+  (doesDirectoryExist, doesFileExist)
 import Control.Applicative ((<$>), (<|>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
@@ -38,7 +38,7 @@ import Debian.Package.Source
 import Debian.Package.Monad
   (Build, runIO, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
 import Debian.Package.Command
-  (chdir, pwd, confirmPath, renameFile, renameDirectory,
+  (chdir, pwd, createDirectoryIfMissing, confirmPath, renameFile, renameDirectory,
    unpack, packInDir', cabalDebian, rawSystem')
 import qualified Debian.Package.Cabal as Cabal
 
@@ -107,7 +107,7 @@ rsyncGenOrigSourceDir pkg = do
                  , baseDir `isPrefixOf` d ]
                  ++ [debDN]
   liftTrace $ do
-    lift $ createDirectoryIfMissing True srcDir
+    createDirectoryIfMissing srcDir
     rawSystem'
       $  ["rsync", "-auv"]
       ++ ["--exclude=" ++ e | e <- excludes]
@@ -151,7 +151,7 @@ cabalGenOrigArchive hpkg = do
   origPath <- origArchive $ package hpkg
   apath    <- cabalGenArchive $ hackage hpkg
   liftTrace $ do
-    lift $ createDirectoryIfMissing True $ takeDirectory origPath
+    createDirectoryIfMissing $ takeDirectory origPath
     renameFile apath origPath
   return origPath
 
@@ -184,7 +184,7 @@ cabalAutogenDebianDir = do
   debDir   <-  (</> ddName) <$> getBuildDir
   liftTrace $ do
     cabalDebian baseDir Nothing
-    lift $ createDirectoryIfMissing True $ takeDirectory debDir
+    createDirectoryIfMissing $ takeDirectory debDir
     renameDirectory tmpDD debDir
   return debDir
 
