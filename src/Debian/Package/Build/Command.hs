@@ -17,10 +17,7 @@ module Debian.Package.Build.Command (
 
   reinstallGhcLibrary,
 
-  withCurrentDir,
-
-  getBaseDir, withBaseCurrentDir,
-  getBuildDir, withBuildDir,
+  withCurrentDir',
 
   readProcess', rawSystem', system'
   ) where
@@ -35,8 +32,7 @@ import System.Exit (ExitCode (..))
 
 import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
-import Debian.Package.Build.Monad
-  (Trace, traceCommand, traceOut, Build, runIO, liftTrace, askBaseDir, askBuildDir)
+import Debian.Package.Build.Monad (Trace, traceCommand, traceOut)
 
 
 splitCommand :: [a] -> (a, [a])
@@ -148,24 +144,10 @@ reinstallGhcLibrary mode = reinstallPackages . pkgs mode where
   pkgs All = ghcLibraryBinPackages
   pkgs Bin = ghcLibraryPackages
 
-withCurrentDir :: FilePath -> Build a -> Build a
-withCurrentDir dir act = do
-  saveDir <- runIO pwd
-  liftTrace $ chdir dir
+withCurrentDir' :: FilePath -> Trace a -> Trace a
+withCurrentDir' dir act = do
+  saveDir <- lift pwd
+  chdir dir
   r <- act
-  liftTrace $ chdir saveDir
+  chdir saveDir
   return r
-
-getBaseDir :: Build FilePath
-getBaseDir =  runIO pwd >>= askBaseDir
-
-withBaseCurrentDir :: Build a -> Build a
-withBaseCurrentDir act = do
-  baseDir <- getBaseDir
-  withCurrentDir baseDir act
-
-getBuildDir :: Build FilePath
-getBuildDir =  runIO pwd >>= askBuildDir
-
-withBuildDir :: (FilePath -> Build a) -> Build a
-withBuildDir f = getBuildDir >>= f
