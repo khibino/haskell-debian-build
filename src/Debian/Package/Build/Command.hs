@@ -7,7 +7,7 @@ module Debian.Package.Build.Command (
 
   unpackInDir, unpack, packInDir', packInDir,
 
-  cabalDebian,
+  cabalDebian', cabalDebian,
 
   debuild,
 
@@ -114,14 +114,17 @@ withCurrentDir' dir act = do
   chdir saveDir
   return r
 
-cabalDebian :: Maybe String -> Trace ()
-cabalDebian mayRev =
+cabalDebian' :: Maybe String -> Trace ()
+cabalDebian' mayRev =
   rawSystem'
   [ "cabal-debian"
   , "--debianize" {- for cabal-debian 1.25 -}
   , "--quilt"
   , "--revision=" ++ fromMaybe "1~autogen1" mayRev
   ]
+
+cabalDebian :: FilePath -> Maybe String -> Trace ()
+cabalDebian dir = withCurrentDir' dir . cabalDebian'
 
 
 run :: String -> [String] -> Trace ()
