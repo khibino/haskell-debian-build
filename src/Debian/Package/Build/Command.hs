@@ -105,6 +105,15 @@ packInDir :: FilePath -> FilePath -> Trace ()
 pdir `packInDir` wdir =
   packInDir' pdir (pdir <.> tarGz) wdir
 
+
+withCurrentDir' :: FilePath -> Trace a -> Trace a
+withCurrentDir' dir act = do
+  saveDir <- lift pwd
+  chdir dir
+  r <- act
+  chdir saveDir
+  return r
+
 cabalDebian :: Maybe String -> Trace ()
 cabalDebian mayRev =
   rawSystem'
@@ -143,11 +152,3 @@ reinstallGhcLibrary :: BuildMode -> Hackage -> Trace ()
 reinstallGhcLibrary mode = reinstallPackages . pkgs mode where
   pkgs All = ghcLibraryBinPackages
   pkgs Bin = ghcLibraryPackages
-
-withCurrentDir' :: FilePath -> Trace a -> Trace a
-withCurrentDir' dir act = do
-  saveDir <- lift pwd
-  chdir dir
-  r <- act
-  chdir saveDir
-  return r
