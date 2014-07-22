@@ -71,19 +71,13 @@ system' cmd = do
   lift $ Process.system cmd >>= handleExit cmd
 
 readProcess :: [String] -> Build String
-readProcess cmd = do
-  -- traceCommand $ unwords cmd
-  liftTrace $ readProcess' cmd
+readProcess =  liftTrace . readProcess'
 
 rawSystem :: [String] -> Build ()
-rawSystem cmd = do
-  -- traceCommand $ unwords cmd
-  liftTrace . rawSystem' $ cmd
+rawSystem =  liftTrace . rawSystem'
 
 system :: String -> Build ()
-system cmd = do
-  -- traceCommand cmd
-  liftTrace $ system' cmd
+system =  liftTrace . system'
 
 chdir :: String -> Build ()
 chdir dir =  do
