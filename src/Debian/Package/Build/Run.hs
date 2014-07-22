@@ -4,6 +4,8 @@
 module Debian.Package.Build.Run (
   origArchiveName, nativeArchive,
 
+  withCurrentDir, withBaseCurrentDir,
+
   removeBuildDir,
 
   copyDebianDir, cabalDebianDir,
@@ -33,12 +35,35 @@ import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
-import Debian.Package.Build.Monad (Build, runIO, liftTrace, Config (..), askConfig)
+import Debian.Package.Build.Monad
+  (Build, runIO, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
 import Debian.Package.Build.Command
-  (confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian, withCurrentDir,
-   getBaseDir, withBaseCurrentDir, getBuildDir, withBuildDir, rawSystem')
+  (chdir, pwd, confirmPath, renameFile, renameDirectory,
+   unpack, packInDir', cabalDebian, rawSystem')
 import qualified Debian.Package.Build.Cabal as Cabal
 
+
+withCurrentDir :: FilePath -> Build a -> Build a
+withCurrentDir dir act = do
+  saveDir <- runIO pwd
+  liftTrace $ chdir dir
+  r <- act
+  liftTrace $ chdir saveDir
+  return r
+
+getBaseDir :: Build FilePath
+getBaseDir =  runIO pwd >>= askBaseDir
+
+withBaseCurrentDir :: Build a -> Build a
+withBaseCurrentDir act = do
+  baseDir <- getBaseDir
+  withCurrentDir baseDir act
+
+getBuildDir :: Build FilePath
+getBuildDir =  runIO pwd >>= askBuildDir
+
+withBuildDir :: (FilePath -> Build a) -> Build a
+withBuildDir f = getBuildDir >>= f
 
 removeBuildDir :: Build ()
 removeBuildDir = do
