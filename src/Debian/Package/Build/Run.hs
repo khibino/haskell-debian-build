@@ -24,7 +24,7 @@ import System.Directory
   (createDirectoryIfMissing, doesDirectoryExist, doesFileExist)
 import Control.Applicative ((<$>), (<|>))
 import Control.Monad (when)
-import Control.Monad.Trans.Class (MonadTrans (..))
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.Maybe (fromMaybe)
 import Data.List (isPrefixOf)
@@ -43,8 +43,9 @@ import qualified Debian.Package.Build.Cabal as Cabal
 removeBuildDir :: Build ()
 removeBuildDir = do
   bldDir <- getBuildDir
-  found <- runIO $ doesDirectoryExist bldDir
-  when found $ liftTrace $ rawSystem' ["rm", "-r", bldDir]
+  liftTrace $ do
+    found <- lift $ doesDirectoryExist bldDir
+    when found $ rawSystem' ["rm", "-r", bldDir]
 
 debianDirName :: Build FilePath
 debianDirName =  do
@@ -84,8 +85,9 @@ rsyncGenOrigSourceDir pkg = do
                  | d <- [bldDir]
                  , baseDir `isPrefixOf` d ]
                  ++ [debDN]
-  runIO $ createDirectoryIfMissing True srcDir
-  liftTrace $ rawSystem'
+  liftTrace $ do
+    lift $ createDirectoryIfMissing True srcDir
+    rawSystem'
       $  ["rsync", "-auv"]
       ++ ["--exclude=" ++ e | e <- excludes]
       ++ [baseDir </> ".", srcDir </> "." ]
@@ -127,8 +129,9 @@ cabalGenOrigArchive :: HaskellPackage -> Build FilePath
 cabalGenOrigArchive hpkg = do
   origPath <- origArchive $ package hpkg
   apath    <- cabalGenArchive $ hackage hpkg
-  runIO $ createDirectoryIfMissing True $ takeDirectory origPath
-  liftTrace $ renameFile apath origPath
+  liftTrace $ do
+    lift $ createDirectoryIfMissing True $ takeDirectory origPath
+    renameFile apath origPath
   return origPath
 
 cabalGenOrigSources :: HaskellPackage -> Build (FilePath, FilePath)
