@@ -97,7 +97,7 @@ rsyncGenOrigSources pkg = do
   origPath  <- origArchive pkg
   withBuildDir $ packInDir' (takeFileName srcDir) origPath
   copyDebianDir srcDir
-  confirmPath srcDir
+  liftTrace $ confirmPath srcDir
   return (origPath, srcDir)
 
 rsyncGenNativeSources :: Package -> Build (FilePath, FilePath)
@@ -106,7 +106,7 @@ rsyncGenNativeSources pkg = do
   copyDebianDir srcDir
   nativePath <- nativeArchive pkg
   withBuildDir $ packInDir' (takeFileName srcDir) nativePath
-  confirmPath srcDir
+  liftTrace $ confirmPath srcDir
   return (nativePath, srcDir)
 
 rsyncGenSources :: Package -> Build (FilePath, FilePath)
@@ -120,7 +120,7 @@ cabalGenArchive hkg = do
   withBaseCurrentDir . runIO $ Cabal.sdist []
   baseDir <- getBaseDir
   let apath = baseDir </> hackageArchive hkg
-  confirmPath apath
+  liftTrace $ confirmPath apath
   return apath
 
 cabalGenOrigArchive :: HaskellPackage -> Build FilePath
@@ -139,7 +139,7 @@ cabalGenOrigSources hpkg = do
   renameDirectory
     (takeDirectory origPath </> hackageLongName (hackage hpkg))
     srcDir
-  confirmPath srcDir
+  liftTrace $ confirmPath srcDir
   return (origPath, srcDir)
 
 cabalGenSources :: HaskellPackage -> Build (FilePath, FilePath)
