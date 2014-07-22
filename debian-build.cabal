@@ -15,12 +15,12 @@ cabal-version:       >=1.8
 
 library
   exposed-modules:
+                     Debian.Package.Monad
                      Debian.Package.Source
-                     Debian.Package.Build.Monad
-                     Debian.Package.Build.Command
-                     Debian.Package.Build.Cabal
-                     Debian.Package.Build.Run
+                     Debian.Package.Command
+                     Debian.Package.Cabal
                      Debian.Package.Build
+                     Debian.Package.BuildTool
                      Debian.Package.Hackage
 
   other-modules:

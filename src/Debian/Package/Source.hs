@@ -22,8 +22,8 @@ import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage
   (HackageVersion, mkHackageVersion, hackageVersionNumbers,
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
-import Debian.Package.Build.Monad (Trace)
-import Debian.Package.Build.Command (readProcess')
+import Debian.Package.Monad (Trace)
+import Debian.Package.Command (readProcess')
 
 
 -- Combinators like Applicative
