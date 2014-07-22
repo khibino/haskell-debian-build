@@ -1,6 +1,7 @@
 
 module Debian.Package.Build.Monad
-       ( Trace, runTrace, traceIO
+       ( Trace, runTrace, traceCommand, traceOut
+
        , BaseDir, baseDirCurrent, baseDirSpecify
 
        , askBaseDir, askBuildDir
@@ -19,6 +20,8 @@ import Control.Monad (when)
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
 
+import Debian.Package.Internal (traceCommandIO, traceOutIO)
+
 
 type Trace = ReaderT Bool IO
 
@@ -29,6 +32,12 @@ traceIO :: IO () -> Trace ()
 traceIO printIO = do
   t <- ask
   when t $ lift printIO
+
+traceCommand :: String -> Trace ()
+traceCommand =  traceIO . traceCommandIO
+
+traceOut :: String -> Trace ()
+traceOut =  traceIO . traceOutIO
 
 
 newtype BaseDir = BaseDir { unBaseDir :: Maybe FilePath }
