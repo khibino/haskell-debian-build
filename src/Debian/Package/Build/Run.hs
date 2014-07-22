@@ -33,7 +33,7 @@ import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
-import Debian.Package.Build.Monad (Build, runIO, Config (..), askConfig)
+import Debian.Package.Build.Monad (Build, runIO, liftTrace, Config (..), askConfig)
 import Debian.Package.Build.Command
   (confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian, withCurrentDir,
    getBaseDir, withBaseCurrentDir, getBuildDir, withBuildDir, rawSystem')
@@ -43,9 +43,8 @@ import qualified Debian.Package.Build.Cabal as Cabal
 removeBuildDir :: Build ()
 removeBuildDir = do
   bldDir <- getBuildDir
-  runIO $ do
-    found <- doesDirectoryExist bldDir
-    when found $ rawSystem' ["rm", "-r", bldDir]
+  found <- runIO $ doesDirectoryExist bldDir
+  when found $ liftTrace $ rawSystem' ["rm", "-r", bldDir]
 
 debianDirName :: Build FilePath
 debianDirName =  do
@@ -68,7 +67,7 @@ copyDebianDir :: FilePath -> Build ()
 copyDebianDir srcDir = do
   debDN       <- debianDirName
   baseDir     <- getBaseDir
-  runIO $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
+  liftTrace $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
 
 cabalDebianDir :: Maybe String -> FilePath -> Build ()
 cabalDebianDir mayRev srcDir =
@@ -85,9 +84,8 @@ rsyncGenOrigSourceDir pkg = do
                  | d <- [bldDir]
                  , baseDir `isPrefixOf` d ]
                  ++ [debDN]
-  runIO $ do
-    createDirectoryIfMissing True srcDir
-    rawSystem'
+  runIO $ createDirectoryIfMissing True srcDir
+  liftTrace $ rawSystem'
       $  ["rsync", "-auv"]
       ++ ["--exclude=" ++ e | e <- excludes]
       ++ [baseDir </> ".", srcDir </> "." ]
@@ -168,7 +166,7 @@ cabalAutogenDebianDir = do
 cabalAutogenSources :: String -> Build (FilePath, FilePath)
 cabalAutogenSources hname = do
   debDir   <-  cabalAutogenDebianDir
-  pkg      <-  runIO . parsePackageFromChangeLog $ debDir </> "changelog"
+  pkg      <-  liftTrace . parsePackageFromChangeLog $ debDir </> "changelog"
   hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
   renameDirectory debDir (srcDir </> takeFileName debDir)
@@ -192,7 +190,7 @@ findCabalDescription =  MaybeT (getBaseDir >>= runIO . Cabal.findDescriptionFile
 genSources :: Build (Maybe (FilePath, FilePath))
 genSources =  runMaybeT $
   do clog <- findDebianChangeLog
-     pkg  <- lift . runIO $ parsePackageFromChangeLog clog
+     pkg  <- lift . liftTrace $ parsePackageFromChangeLog clog
      (do hname <- takeBaseName <$> findCabalDescription
          hpkg  <- either fail return $ haskellPackageFromPackage hname pkg
          lift $ cabalGenSources hpkg
