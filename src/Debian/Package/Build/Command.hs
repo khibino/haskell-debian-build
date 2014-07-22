@@ -72,19 +72,10 @@ system' cmd = do
   traceCommand cmd
   lift $ Process.system cmd >>= handleExit cmd
 
--- readProcess :: [String] -> Build String
--- readProcess =  liftTrace . readProcess'
-
-rawSystem :: [String] -> Build ()
-rawSystem =  liftTrace . rawSystem'
-
-system :: String -> Build ()
-system =  liftTrace . system'
-
-chdir :: String -> Build ()
+chdir :: String -> Trace ()
 chdir dir =  do
-  liftTrace . traceCommand $ "<setCurrentDirectory> " ++ dir
-  runIO $ D.setCurrentDirectory dir
+  traceCommand $ "<setCurrentDirectory> " ++ dir
+  lift $ D.setCurrentDirectory dir
 
 pwd :: IO String
 pwd =  D.getCurrentDirectory
@@ -92,72 +83,73 @@ pwd =  D.getCurrentDirectory
 renameMsg :: String -> String -> String -> String
 renameMsg tag src dst = unwords ["<" ++ tag ++ "> ", src, "-->", dst]
 
-renameDirectory :: String -> String -> Build ()
+renameDirectory :: String -> String -> Trace ()
 renameDirectory src dst = do
-  liftTrace . traceCommand $ renameMsg "renameDirectory" src dst
-  runIO $ D.renameDirectory src dst
+  traceCommand $ renameMsg "renameDirectory" src dst
+  lift $ D.renameDirectory src dst
 
-renameFile :: String -> String -> Build ()
+renameFile :: String -> String -> Trace ()
 renameFile src dst = do
-  liftTrace . traceCommand $ renameMsg "renameFile" src dst
-  runIO $ D.renameFile src dst
+  traceCommand $ renameMsg "renameFile" src dst
+  lift $ D.renameFile src dst
 
 confirmPath :: String -> Trace ()
 confirmPath path =
   readProcess' ["ls", "-ld", path] >>= traceOut
 
 
-unpackInDir :: FilePath -> FilePath -> Build ()
+unpackInDir :: FilePath -> FilePath -> Trace ()
 apath `unpackInDir` dir = do
-  runIO . putStrLn $ unwords ["Unpacking", apath, "in", dir, "."]
-  rawSystem ["tar", "-C", dir, "-zxf", apath]
+  lift . putStrLn $ unwords ["Unpacking", apath, "in", dir, "."]
+  rawSystem' ["tar", "-C", dir, "-zxf", apath]
 
-unpack :: FilePath -> Build ()
+unpack :: FilePath -> Trace ()
 unpack apath = apath `unpackInDir` takeDirectory apath
 
-packInDir' :: FilePath -> FilePath -> FilePath -> Build ()
+packInDir' :: FilePath -> FilePath -> FilePath -> Trace ()
 packInDir' pdir apath wdir = do
-  runIO . putStrLn $ unwords ["Packing", pdir, "in", wdir, "into", apath, "."]
-  rawSystem ["tar", "-C", wdir, "-zcf", apath, pdir]
+  lift . putStrLn $ unwords ["Packing", pdir, "in", wdir, "into", apath, "."]
+  rawSystem' ["tar", "-C", wdir, "-zcf", apath, pdir]
 
-packInDir :: FilePath -> FilePath -> Build ()
+packInDir :: FilePath -> FilePath -> Trace ()
 pdir `packInDir` wdir =
   packInDir' pdir (pdir <.> tarGz) wdir
 
-cabalDebian :: Maybe String -> Build ()
+cabalDebian :: Maybe String -> Trace ()
 cabalDebian mayRev =
-  rawSystem [ "cabal-debian"
-            , "--debianize" {- for cabal-debian 1.25 -}
-            , "--quilt"
-            , "--revision=" ++ fromMaybe "1~autogen1" mayRev
-            ]
+  rawSystem'
+  [ "cabal-debian"
+  , "--debianize" {- for cabal-debian 1.25 -}
+  , "--quilt"
+  , "--revision=" ++ fromMaybe "1~autogen1" mayRev
+  ]
 
 
-run :: String -> [String] -> Build ()
-run cmd = rawSystem . (cmd :)
+run :: String -> [String] -> Trace ()
+run cmd = rawSystem' . (cmd :)
 
-debuild :: [String] -> Build ()
+debuild :: [String] -> Trace ()
 debuild =  run "debuild"
 
 data BuildMode = All | Bin
 
-buildPackage :: BuildMode -> [String] -> Build ()
+buildPackage :: BuildMode -> [String] -> Trace ()
 buildPackage mode opts = do
   let modeOpt All = []
       modeOpt Bin = ["-B"]
   debuild $ ["-uc", "-us"] ++ modeOpt mode ++ opts
 
-rebuild :: BuildMode -> [String] -> Build ()
+rebuild :: BuildMode -> [String] -> Trace ()
 rebuild mode opts = do
   debuild ["clean"]
   buildPackage mode opts
 
-reinstallPackages :: [String] -> Build ()
+reinstallPackages :: [String] -> Trace ()
 reinstallPackages pkgs {- Need to be shell escapes -} = do
-  system $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
-  rawSystem ["sudo", "debi"]
+  system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
+  rawSystem' ["sudo", "debi"]
 
-reinstallGhcLibrary :: BuildMode -> Hackage -> Build ()
+reinstallGhcLibrary :: BuildMode -> Hackage -> Trace ()
 reinstallGhcLibrary mode = reinstallPackages . pkgs mode where
   pkgs All = ghcLibraryBinPackages
   pkgs Bin = ghcLibraryPackages
@@ -165,9 +157,9 @@ reinstallGhcLibrary mode = reinstallPackages . pkgs mode where
 withCurrentDir :: FilePath -> Build a -> Build a
 withCurrentDir dir act = do
   saveDir <- runIO pwd
-  chdir dir
+  liftTrace $ chdir dir
   r <- act
-  chdir saveDir
+  liftTrace $ chdir saveDir
   return r
 
 getBaseDir :: Build FilePath
