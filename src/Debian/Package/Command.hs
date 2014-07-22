@@ -1,5 +1,5 @@
 
-module Debian.Package.Build.Command (
+module Debian.Package.Command (
   chdir, pwd,
   renameDirectory, renameFile,
 
@@ -32,7 +32,7 @@ import System.Exit (ExitCode (..))
 
 import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
-import Debian.Package.Build.Monad (Trace, traceCommand, traceOut)
+import Debian.Package.Monad (Trace, traceCommand, traceOut)
 
 
 splitCommand :: [a] -> (a, [a])

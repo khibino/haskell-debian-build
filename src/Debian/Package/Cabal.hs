@@ -1,4 +1,4 @@
-module Debian.Package.Build.Cabal (
+module Debian.Package.Cabal (
   findDescriptionFile,
   parsePackageDescription,
   hackageLongName,
@@ -27,7 +27,7 @@ import Distribution.PackageDescription.Parse (readPackageDescription)
 
 import Distribution.Simple (defaultMain)
 
-import Debian.Package.Build.Monad (Trace, traceCommand)
+import Debian.Package.Monad (Trace, traceCommand)
 
 findDescriptionFile :: FilePath -> IO (Maybe FilePath)
 findDescriptionFile dir = do
