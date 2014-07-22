@@ -71,7 +71,7 @@ copyDebianDir srcDir = do
 
 cabalDebianDir :: Maybe String -> FilePath -> Build ()
 cabalDebianDir mayRev srcDir =
-  withCurrentDir srcDir $ cabalDebian mayRev
+  withCurrentDir srcDir . liftTrace $ cabalDebian mayRev
 
 
 rsyncGenOrigSourceDir :: Package -> Build FilePath
@@ -95,7 +95,7 @@ rsyncGenOrigSources :: Package -> Build (FilePath, FilePath)
 rsyncGenOrigSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
   origPath  <- origArchive pkg
-  withBuildDir $ packInDir' (takeFileName srcDir) origPath
+  withBuildDir $ liftTrace . packInDir' (takeFileName srcDir) origPath
   copyDebianDir srcDir
   liftTrace $ confirmPath srcDir
   return (origPath, srcDir)
@@ -105,7 +105,7 @@ rsyncGenNativeSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
   copyDebianDir srcDir
   nativePath <- nativeArchive pkg
-  withBuildDir $ packInDir' (takeFileName srcDir) nativePath
+  withBuildDir $ liftTrace . packInDir' (takeFileName srcDir) nativePath
   liftTrace $ confirmPath srcDir
   return (nativePath, srcDir)
 
@@ -128,18 +128,19 @@ cabalGenOrigArchive hpkg = do
   origPath <- origArchive $ package hpkg
   apath    <- cabalGenArchive $ hackage hpkg
   runIO $ createDirectoryIfMissing True $ takeDirectory origPath
-  renameFile apath origPath
+  liftTrace $ renameFile apath origPath
   return origPath
 
 cabalGenOrigSources :: HaskellPackage -> Build (FilePath, FilePath)
 cabalGenOrigSources hpkg = do
   origPath <- cabalGenOrigArchive hpkg
   srcDir   <- sourceDir $ package hpkg
-  unpack origPath
-  renameDirectory
-    (takeDirectory origPath </> hackageLongName (hackage hpkg))
-    srcDir
-  liftTrace $ confirmPath srcDir
+  liftTrace $ do
+    unpack origPath
+    renameDirectory
+      (takeDirectory origPath </> hackageLongName (hackage hpkg))
+      srcDir
+    confirmPath srcDir
   return (origPath, srcDir)
 
 cabalGenSources :: HaskellPackage -> Build (FilePath, FilePath)
@@ -159,8 +160,9 @@ cabalAutogenDebianDir = do
   cabalDebianDir Nothing baseDir
 
   debDir   <-  (</> ddName) <$> getBuildDir
-  runIO $ createDirectoryIfMissing True $ takeDirectory debDir
-  renameDirectory tmpDD debDir
+  liftTrace $ do
+    lift $ createDirectoryIfMissing True $ takeDirectory debDir
+    renameDirectory tmpDD debDir
   return debDir
 
 cabalAutogenSources :: String -> Build (FilePath, FilePath)
@@ -169,7 +171,7 @@ cabalAutogenSources hname = do
   pkg      <-  liftTrace . parsePackageFromChangeLog $ debDir </> "changelog"
   hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
-  renameDirectory debDir (srcDir </> takeFileName debDir)
+  liftTrace $ renameDirectory debDir (srcDir </> takeFileName debDir)
   return pair
 
 
