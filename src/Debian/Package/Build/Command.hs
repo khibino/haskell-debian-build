@@ -26,15 +26,16 @@ module Debian.Package.Build.Command (
   ) where
 
 import Data.Maybe (fromMaybe)
+import Control.Arrow ((&&&))
 import Control.Applicative ((<$>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
 import qualified System.Process as Process
+import System.Exit (ExitCode (..))
 
-import Debian.Package.Internal
-  (tarGz, splitCommand, handleExit, traceCommandIO, traceOutIO)
+import Debian.Package.Internal (tarGz, traceCommandIO, traceOutIO)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
 import Debian.Package.Build.Monad
   (Trace, traceIO, Build, runIO, liftTrace, askBaseDir, askBuildDir, askConfig, trace)
@@ -50,6 +51,14 @@ traceCommand =  traceIO . traceCommandIO
 
 traceOut :: String -> Build ()
 traceOut =  traceBuild . traceOutIO
+
+splitCommand :: [a] -> (a, [a])
+splitCommand =  head &&& tail
+
+handleExit :: String -> ExitCode -> IO ()
+handleExit cmd = d  where
+  d (ExitFailure rv) = fail $ unwords ["Failed with", show rv ++ ":", cmd]
+  d  ExitSuccess     = return ()
 
 readProcess' :: [String] -> Trace String
 readProcess' cmd0 = do
