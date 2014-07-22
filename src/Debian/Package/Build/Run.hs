@@ -8,7 +8,7 @@ module Debian.Package.Build.Run (
 
   removeBuildDir,
 
-  copyDebianDir, cabalDebianDir,
+  copyDebianDir,
 
   rsyncGenOrigSources,
   rsyncGenNativeSources,
@@ -94,10 +94,6 @@ copyDebianDir srcDir = do
   debDN       <- debianDirName
   baseDir     <- getBaseDir
   liftTrace $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
-
-cabalDebianDir :: Maybe String -> FilePath -> Build ()
-cabalDebianDir mayRev srcDir =
-  withCurrentDir srcDir . liftTrace $ cabalDebian mayRev
 
 
 rsyncGenOrigSourceDir :: Package -> Build FilePath
@@ -185,10 +181,9 @@ cabalAutogenDebianDir = do
   exist <- runIO $ doesDirectoryExist tmpDD
   when exist (fail $ "Invalid state: directory already exist: " ++ tmpDD)
 
-  cabalDebianDir Nothing baseDir
-
   debDir   <-  (</> ddName) <$> getBuildDir
   liftTrace $ do
+    cabalDebian baseDir Nothing
     lift $ createDirectoryIfMissing True $ takeDirectory debDir
     renameDirectory tmpDD debDir
   return debDir
