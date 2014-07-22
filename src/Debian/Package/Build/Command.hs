@@ -33,17 +33,11 @@ import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 
-import Debian.Package.Internal (tarGz, traceCommandIO, traceOutIO)
+import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
 import Debian.Package.Build.Monad
-  (Trace, traceIO, Build, runIO, liftTrace, askBaseDir, askBuildDir)
+  (Trace, traceCommand, traceOut, Build, runIO, liftTrace, askBaseDir, askBuildDir)
 
-
-traceCommand :: String -> Trace ()
-traceCommand =  traceIO . traceCommandIO
-
-traceOut :: String -> Trace ()
-traceOut =  traceIO . traceOutIO
 
 splitCommand :: [a] -> (a, [a])
 splitCommand =  head &&& tail
