@@ -1,6 +1,6 @@
 
 module Debian.Package.Command (
-  chdir, pwd,
+  chdir, pwd, createDirectoryIfMissing,
   renameDirectory, renameFile,
 
   confirmPath,
@@ -69,6 +69,11 @@ chdir dir =  do
 
 pwd :: IO String
 pwd =  D.getCurrentDirectory
+
+createDirectoryIfMissing :: String -> Trace ()
+createDirectoryIfMissing dir = do
+  traceCommand $ "<createDirectoryIfMissing True> " ++ dir
+  lift $ D.createDirectoryIfMissing True dir
 
 renameMsg :: String -> String -> String -> String
 renameMsg tag src dst = unwords ["<" ++ tag ++ "> ", src, "-->", dst]
