@@ -14,13 +14,12 @@ module Debian.Package.Build.Monad
        ) where
 
 import System.FilePath ((</>))
+import System.IO (hPutStrLn, hFlush, stderr)
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (MonadTrans (..))
 import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
-
-import Debian.Package.Internal (traceCommandIO, traceOutIO)
 
 
 type Trace = ReaderT Bool IO
@@ -33,11 +32,17 @@ traceIO printIO = do
   t <- ask
   when t $ lift printIO
 
+tprint :: Char -> String -> IO ()
+tprint pc s = do
+  let fh = stderr
+  hPutStrLn fh $ pc : " " ++ s
+  hFlush fh
+
 traceCommand :: String -> Trace ()
-traceCommand =  traceIO . traceCommandIO
+traceCommand =  traceIO . tprint '+'
 
 traceOut :: String -> Trace ()
-traceOut =  traceIO . traceOutIO
+traceOut =  traceIO . tprint '>'
 
 
 newtype BaseDir = BaseDir { unBaseDir :: Maybe FilePath }
