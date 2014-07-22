@@ -1,6 +1,7 @@
 
 module Debian.Package.Build.Monad
-       ( BaseDir, baseDirCurrent, baseDirSpecify
+       ( Trace, runTrace, traceIO
+       , BaseDir, baseDirCurrent, baseDirSpecify
 
        , askBaseDir, askBuildDir
 
@@ -8,14 +9,26 @@ module Debian.Package.Build.Monad
 
        , Config, defaultConfig, buildDir, mayDebianDirName, trace
 
-       , Build, runIO, runBuild, askConfig
+       , Build, runIO, liftTrace, traceBuild, runBuild, askConfig
        ) where
 
 import System.FilePath ((</>))
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
+import Control.Monad (when)
 import Control.Monad.Trans.Class (MonadTrans (..))
-import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
+
+
+type Trace = ReaderT Bool IO
+
+runTrace :: Trace a -> Bool -> IO a
+runTrace = runReaderT
+
+traceIO :: IO () -> Trace ()
+traceIO printIO = do
+  t <- ask
+  when t $ lift printIO
 
 
 newtype BaseDir = BaseDir { unBaseDir :: Maybe FilePath }
@@ -56,6 +69,12 @@ type Build = ReaderT BaseDir (ReaderT Config IO)
 
 runIO :: IO a -> Build a
 runIO =  lift . lift
+
+liftTrace :: Trace a -> Build a
+liftTrace t = lift . ReaderT $ runTrace t . trace
+
+traceBuild :: IO () -> Build ()
+traceBuild =  liftTrace . traceIO
 
 runBuild :: Build a -> BaseDir -> Config -> IO a
 runBuild b =  runReaderT . runReaderT b
