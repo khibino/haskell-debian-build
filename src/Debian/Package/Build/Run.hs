@@ -117,7 +117,7 @@ rsyncGenSources pkg
 
 cabalGenArchive :: Hackage -> Build FilePath
 cabalGenArchive hkg = do
-  withBaseCurrentDir . runIO $ Cabal.sdist []
+  withBaseCurrentDir . liftTrace $ Cabal.sdist []
   baseDir <- getBaseDir
   let apath = baseDir </> hackageArchive hkg
   liftTrace $ confirmPath apath
