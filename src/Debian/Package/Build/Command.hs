@@ -27,8 +27,6 @@ module Debian.Package.Build.Command (
 
 import Data.Maybe (fromMaybe)
 import Control.Arrow ((&&&))
-import Control.Applicative ((<$>))
-import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
@@ -38,19 +36,14 @@ import System.Exit (ExitCode (..))
 import Debian.Package.Internal (tarGz, traceCommandIO, traceOutIO)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
 import Debian.Package.Build.Monad
-  (Trace, traceIO, Build, runIO, liftTrace, askBaseDir, askBuildDir, askConfig, trace)
+  (Trace, traceIO, Build, runIO, liftTrace, askBaseDir, askBuildDir)
 
-
-traceBuild :: IO () -> Build ()
-traceBuild printIO = do
- t <- trace <$> askConfig
- when t $ runIO printIO
 
 traceCommand :: String -> Trace ()
 traceCommand =  traceIO . traceCommandIO
 
-traceOut :: String -> Build ()
-traceOut =  traceBuild . traceOutIO
+traceOut :: String -> Trace ()
+traceOut =  traceIO . traceOutIO
 
 splitCommand :: [a] -> (a, [a])
 splitCommand =  head &&& tail
@@ -79,8 +72,8 @@ system' cmd = do
   traceCommand cmd
   lift $ Process.system cmd >>= handleExit cmd
 
-readProcess :: [String] -> Build String
-readProcess =  liftTrace . readProcess'
+-- readProcess :: [String] -> Build String
+-- readProcess =  liftTrace . readProcess'
 
 rawSystem :: [String] -> Build ()
 rawSystem =  liftTrace . rawSystem'
@@ -109,9 +102,9 @@ renameFile src dst = do
   liftTrace . traceCommand $ renameMsg "renameFile" src dst
   runIO $ D.renameFile src dst
 
-confirmPath :: String -> Build ()
+confirmPath :: String -> Trace ()
 confirmPath path =
-  readProcess ["ls", "-ld", path] >>= traceOut
+  readProcess' ["ls", "-ld", path] >>= traceOut
 
 
 unpackInDir :: FilePath -> FilePath -> Build ()
