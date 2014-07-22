@@ -1,17 +1,16 @@
 
-module Debian.Package.Internal (
-  tarGz,
+module Debian.Package.Internal
+       ( tarGz
 
-  readProcess', rawSystem', system',
+       , splitCommand, handleExit
 
-  traceCommandIO, traceOutIO
-  ) where
+       , traceCommandIO, traceOutIO
+       ) where
 
 import Control.Arrow ((&&&))
 import System.FilePath ((<.>))
 import System.IO (Handle, hPutStrLn, hFlush, stderr)
 import System.Exit (ExitCode (..))
-import System.Process (readProcess, rawSystem, system)
 
 
 tarGz :: String
@@ -34,20 +33,7 @@ traceOutIO =  trace '>'
 splitCommand :: [a] -> (a, [a])
 splitCommand =  head &&& tail
 
-readProcess' :: [String] -> IO String
-readProcess' cmd0 = do
-  let (cmd, args) = splitCommand cmd0
-  readProcess cmd args ""
-
 handleExit :: String -> ExitCode -> IO ()
 handleExit cmd = d  where
   d (ExitFailure rv) = fail $ unwords ["Failed with", show rv ++ ":", cmd]
   d  ExitSuccess     = return ()
-
-rawSystem' :: [String] -> IO ()
-rawSystem' cmd0 = do
-  let (cmd, args) = splitCommand cmd0
-  rawSystem cmd args >>= handleExit cmd
-
-system' :: String -> IO ()
-system' cmd = system cmd >>= handleExit cmd

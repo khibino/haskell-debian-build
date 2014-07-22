@@ -29,7 +29,6 @@ import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.Maybe (fromMaybe)
 import Data.List (isPrefixOf)
 
-import Debian.Package.Internal (rawSystem')
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
@@ -37,7 +36,7 @@ import Debian.Package.Source
 import Debian.Package.Build.Monad (Build, runIO, Config (..), askConfig)
 import Debian.Package.Build.Command
   (confirmPath, renameFile, renameDirectory, unpack, packInDir', cabalDebian, withCurrentDir,
-   getBaseDir, withBaseCurrentDir, getBuildDir, withBuildDir)
+   getBaseDir, withBaseCurrentDir, getBuildDir, withBuildDir, rawSystem')
 import qualified Debian.Package.Build.Cabal as Cabal
 
 
