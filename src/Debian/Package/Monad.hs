@@ -10,7 +10,7 @@ module Debian.Package.Monad
 
        , Config, defaultConfig, buildDir, mayDebianDirName, trace
 
-       , Build, runIO, liftTrace, runBuild, askConfig
+       , Build, liftTrace, runBuild, askConfig
        ) where
 
 import System.FilePath ((</>))
@@ -80,9 +80,6 @@ defaultConfig :: Config
 defaultConfig =  Config (buildDirRelative ".deb-build") Nothing True
 
 type Build = ReaderT BaseDir (ReaderT Config IO)
-
-runIO :: IO a -> Build a
-runIO =  lift . lift
 
 liftTrace :: Trace a -> Build a
 liftTrace t = lift . ReaderT $ runTrace t . trace
