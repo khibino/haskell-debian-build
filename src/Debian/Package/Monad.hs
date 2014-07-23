@@ -18,7 +18,7 @@ import System.IO (hPutStrLn, hFlush, stderr)
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad (when)
-import Control.Monad.Trans.Class (MonadTrans (..))
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
 
 
