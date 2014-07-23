@@ -1,13 +1,11 @@
-module Debian.Package.Cabal (
-  findDescriptionFile,
-  parsePackageDescription,
-  hackageLongName,
-  hackageName, hackageVersion,
+module Debian.Package.Cabal
+       ( findDescriptionFile
+       , parsePackageDescription
+       , hackageLongName, hackageName, hackageVersion
 
-  setupCmd,
-  clean, sdist,
-  configure, build, install, register
-  )  where
+       , setupCmd, clean, sdist
+       , configure, build, install, register
+       )  where
 
 import Control.Applicative ((<$>))
 import Control.Monad (filterM)

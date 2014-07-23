@@ -1,13 +1,16 @@
 
-module Debian.Package.Source (
-  DebianVersion, versionFromHackageVersion,
-  Package, mkPackage, sourceName, version, origVersion, isNative,
+module Debian.Package.Source
+       ( DebianVersion, versionFromHackageVersion
 
-  origArchiveName, nativeArchiveName, sourceDirName, deriveHackageVersion,
-  packageFromChangeLog, parsePackageFromChangeLog,
+       , Package, mkPackage, sourceName, version, origVersion, isNative
 
-  HaskellPackage, hackage, package, haskellPackageDefault, haskellPackageFromPackage
-  ) where
+       , origArchiveName, nativeArchiveName, sourceDirName, deriveHackageVersion
+
+       , packageFromChangeLog, parsePackageFromChangeLog
+
+       , HaskellPackage, hackage, package
+       , haskellPackageDefault, haskellPackageFromPackage
+       ) where
 
 import Data.Maybe (listToMaybe)
 import Control.Arrow (second)
