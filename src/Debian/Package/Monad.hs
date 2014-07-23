@@ -25,7 +25,7 @@ import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
 type Trace = ReaderT Bool IO
 
 runTrace :: Trace a -> Bool -> IO a
-runTrace = runReaderT
+runTrace =  runReaderT
 
 traceIO :: IO () -> Trace ()
 traceIO printIO = do

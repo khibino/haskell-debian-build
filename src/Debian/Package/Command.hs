@@ -1,26 +1,27 @@
 
-module Debian.Package.Command (
-  chdir, pwd, createDirectoryIfMissing,
-  renameDirectory, renameFile,
+module Debian.Package.Command
+       ( chdir, pwd
 
-  confirmPath,
+       , createDirectoryIfMissing, renameDirectory, renameFile
 
-  unpackInDir, unpack, packInDir', packInDir,
+       , confirmPath
 
-  cabalDebian', cabalDebian,
+       , unpackInDir, unpack, packInDir', packInDir
 
-  debuild,
+       , cabalDebian', cabalDebian
 
-  BuildMode (..),
+       , debuild
 
-  buildPackage, rebuild,
+       , BuildMode (..)
 
-  reinstallGhcLibrary,
+       , buildPackage, rebuild
 
-  withCurrentDir',
+       , reinstallGhcLibrary
 
-  readProcess', rawSystem', system'
-  ) where
+       , withCurrentDir'
+
+       , readProcess', rawSystem', system'
+       ) where
 
 import Data.Maybe (fromMaybe)
 import Control.Arrow ((&&&))

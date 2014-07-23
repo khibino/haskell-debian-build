@@ -1,25 +1,21 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Debian.Package.Build (
-  origArchiveName, nativeArchive,
+module Debian.Package.Build
+       ( origArchiveName, nativeArchive
 
-  withCurrentDir, withBaseCurrentDir,
+       , withCurrentDir, withBaseCurrentDir
 
-  removeBuildDir,
+       , removeBuildDir
 
-  copyDebianDir,
+       , copyDebianDir
 
-  rsyncGenOrigSources,
-  rsyncGenNativeSources,
-  rsyncGenSources,
+       , rsyncGenOrigSources, rsyncGenNativeSources, rsyncGenSources
 
-  cabalGenOrigSources,
-  cabalGenSources,
-  cabalAutogenSources,
+       , cabalGenOrigSources, cabalGenSources, cabalAutogenSources
 
-  genSources
-  ) where
+       , genSources
+       ) where
 
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
 import System.Directory

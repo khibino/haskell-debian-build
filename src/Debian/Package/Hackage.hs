@@ -1,18 +1,18 @@
 
-module Debian.Package.Hackage (
-  HackageVersion, mkHackageVersion, hackageVersionNumbers,
+module Debian.Package.Hackage
+       ( HackageVersion, mkHackageVersion, hackageVersionNumbers
 
-  Hackage, mkHackage, hackageName, hackageVersion, debianShortName,
-  mkHackageDefault,
+       , Hackage, mkHackage, hackageName, hackageVersion
+       , debianShortName, mkHackageDefault
 
-  NameRule (..), debianNamesFromSourceName,
+       , NameRule (..), debianNamesFromSourceName
 
-  hackageLongName,
+       , hackageLongName
 
-  hackageArchiveName, hackageArchive,
+       , hackageArchiveName, hackageArchive
 
-  ghcLibraryBinPackages, ghcLibraryDocPackage, ghcLibraryPackages
-  ) where
+       , ghcLibraryBinPackages, ghcLibraryDocPackage, ghcLibraryPackages
+       ) where
 
 import Data.List (stripPrefix)
 import Data.Char (toLower)
