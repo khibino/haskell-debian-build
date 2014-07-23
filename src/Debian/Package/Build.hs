@@ -26,6 +26,7 @@ import System.Directory
   (doesDirectoryExist, doesFileExist)
 import Control.Applicative ((<$>), (<|>))
 import Control.Monad (when)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.Maybe (fromMaybe)
@@ -36,7 +37,7 @@ import Debian.Package.Source
   (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
 import Debian.Package.Monad
-  (Build, runIO, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
+  (Build, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
 import Debian.Package.Command
   (chdir, pwd, createDirectoryIfMissing, confirmPath, renameFile, renameDirectory,
    unpack, packInDir', cabalDebian, rawSystem')
@@ -45,14 +46,14 @@ import qualified Debian.Package.Cabal as Cabal
 
 withCurrentDir :: FilePath -> Build a -> Build a
 withCurrentDir dir act = do
-  saveDir <- runIO pwd
+  saveDir <- liftIO pwd
   liftTrace $ chdir dir
   r <- act
   liftTrace $ chdir saveDir
   return r
 
 getBaseDir :: Build FilePath
-getBaseDir =  runIO pwd >>= askBaseDir
+getBaseDir =  liftIO pwd >>= askBaseDir
 
 withBaseCurrentDir :: Build a -> Build a
 withBaseCurrentDir act = do
@@ -60,7 +61,7 @@ withBaseCurrentDir act = do
   withCurrentDir baseDir act
 
 getBuildDir :: Build FilePath
-getBuildDir =  runIO pwd >>= askBuildDir
+getBuildDir =  liftIO pwd >>= askBuildDir
 
 withBuildDir :: (FilePath -> Build a) -> Build a
 withBuildDir f = getBuildDir >>= f
@@ -69,7 +70,7 @@ removeBuildDir :: Build ()
 removeBuildDir = do
   bldDir <- getBuildDir
   liftTrace $ do
-    found <- lift $ doesDirectoryExist bldDir
+    found <- liftIO $ doesDirectoryExist bldDir
     when found $ rawSystem' ["rm", "-r", bldDir]
 
 debianDirName :: Build FilePath
@@ -178,7 +179,7 @@ cabalAutogenDebianDir = do
   baseDir  <-  getBaseDir
   let ddName =  "debian"
       tmpDD  =  baseDir </> ddName
-  exist <- runIO $ doesDirectoryExist tmpDD
+  exist <- liftIO $ doesDirectoryExist tmpDD
   when exist (fail $ "Invalid state: directory already exist: " ++ tmpDD)
 
   debDir   <-  (</> ddName) <$> getBuildDir
@@ -203,14 +204,14 @@ findDebianChangeLog =  MaybeT $ do
   baseDir  <-  getBaseDir
   debDN    <-  debianDirName
   let changelog = baseDir </> debDN </> "changelog"
-  runIO $ do
+  liftIO $ do
     exist <- doesFileExist changelog
     return $ if exist
              then Just changelog
              else Nothing
 
 findCabalDescription :: MaybeT Build FilePath
-findCabalDescription =  MaybeT (getBaseDir >>= runIO . Cabal.findDescriptionFile)
+findCabalDescription =  MaybeT (getBaseDir >>= liftIO . Cabal.findDescriptionFile)
 
 genSources :: Build (Maybe (FilePath, FilePath))
 genSources =  runMaybeT $
