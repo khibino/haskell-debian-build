@@ -29,7 +29,7 @@ import Debian.Package.Monad (Trace)
 import Debian.Package.Command (readProcess')
 
 
--- Combinators like Applicative
+-- Combinators like Applicative -- for base-4.5.0.0
 
 (<$>) :: Functor m => (a -> b) -> m a -> m b
 (<$>) =  fmap
