@@ -64,6 +64,7 @@ debianShortName :: Hackage -> String
 debianShortName (Hackage _ _ sn) = sn
 
 -- | Generate 'Hackage' type from package name and version
+--   using 'NameRule'
 mkHackageDefault :: NameRule       -- ^ Rule flag to generate names
                  -> String         -- ^ Hackage name string
                  -> HackageVersion -- ^ Version of hackage
