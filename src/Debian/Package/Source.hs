@@ -57,16 +57,16 @@ data DebianVersion
   = DebianNative    Version (Maybe Int)
   | DebianNonNative Version String
 
-debianNatieveVersion :: [Int] -> Maybe Int -> DebianVersion
-debianNatieveVersion v =  DebianNative (Version v [])
+debianNativeVersion :: [Int] -> Maybe Int -> DebianVersion
+debianNativeVersion v =  DebianNative (Version v [])
 
-debianNonNatieveVersion :: [Int] -> String -> DebianVersion
-debianNonNatieveVersion v = DebianNonNative (Version v [])
+debianNonNativeVersion :: [Int] -> String -> DebianVersion
+debianNonNativeVersion v = DebianNonNative (Version v [])
 
 versionFromHackageVersion :: HackageVersion -> Maybe String -> DebianVersion
 versionFromHackageVersion hv = d where
-  d (Just rev) = debianNonNatieveVersion [v0, v1, v2, v3] rev
-  d Nothing    = debianNatieveVersion    [v0, v1, v2, v3] Nothing
+  d (Just rev) = debianNonNativeVersion [v0, v1, v2, v3] rev
+  d Nothing    = debianNativeVersion    [v0, v1, v2, v3] Nothing
   (v0, v1, v2, v3) = hackageVersionNumbers hv
 
 origVersion' :: DebianVersion -> Version
