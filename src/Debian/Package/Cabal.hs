@@ -27,6 +27,8 @@ import Distribution.Simple (defaultMain)
 
 import Debian.Package.Monad (Trace, traceCommand)
 
+
+-- | Find .cabal file
 findDescriptionFile :: FilePath -> IO (Maybe FilePath)
 findDescriptionFile dir = do
   fs  <-  getDirectoryContents dir
@@ -37,15 +39,19 @@ findDescriptionFile dir = do
         where suf = ".cabal"
   fmap (dir </>) . listToMaybe <$> filterM find fs
 
+-- | Parse .cabal file
 parsePackageDescription :: FilePath -> IO PackageDescription
 parsePackageDescription =  (packageDescription `fmap`) . readPackageDescription silent
 
+-- | Hackage name and version string from 'PackageDescription'
 hackageLongName :: PackageDescription -> String
 hackageLongName =  show . disp . package
 
+-- | Hackage name string from 'PackageDescription'
 hackageName :: PackageDescription -> String
 hackageName =  show . disp . pkgName . package
 
+-- | Hackage version string from 'PackageDescription'
 hackageVersion :: PackageDescription -> String
 hackageVersion =  show . disp . pkgVersion . package
 
@@ -58,23 +64,30 @@ setup args =  do
   traceCommand (unwords $ "<cabal>" : args)
   lift $ args `withArgs` defaultMain
 
+-- | Call cabal library defaultMain like Setup.hs
 setupCmd :: String -> [String] -> Trace ()
 setupCmd cmd = setup . (cmd : )
 
+-- | Cabal library defaultMain with sub-command clean
 clean :: [String] -> Trace ()
 clean =  setupCmd "clean"
 
+-- | Cabal library defaultMain with sub-command configure
 configure :: [String] -> Trace ()
 configure =  setupCmd "configure"
 
+-- | Cabal library defaultMain with sub-command sdist
 sdist :: [String] -> Trace ()
 sdist =  setupCmd "sdist"
 
+-- | Cabal library defaultMain with sub-command build
 build :: [String] -> Trace ()
 build =  setupCmd "build"
 
+-- | Cabal library defaultMain with sub-command install
 install :: [String] -> Trace ()
 install =  setupCmd "install"
 
+-- | Cabal library defaultMain with sub-command register
 register :: [String] -> Trace ()
 register =  setupCmd "register"
