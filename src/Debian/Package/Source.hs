@@ -98,8 +98,8 @@ returnParsedNMU = returnParsed $
                   Just <$> (string "+nmu" *> readS_to_P readDec)  <|>
                   pure Nothing
 
-parseDebianversion :: ReadP DebianVersion
-parseDebianversion =  do
+parseDebianVersion :: ReadP DebianVersion
+parseDebianVersion =  do
   vs0 <- readS_to_P lexWord
   let (vs1, rtag) = break (== '-') vs0
       (vs2, nmu)  = break (== '+') vs1
@@ -113,7 +113,7 @@ instance Show DebianVersion where
     d (DebianNonNative v r)  = showVersion v ++ '-': r
 
 instance Read DebianVersion where
-  readsPrec _ = readP_to_S parseDebianversion
+  readsPrec _ = readP_to_S parseDebianVersion
 
 readMaybe' :: Read a => String -> Maybe a
 readMaybe' =  fmap fst . listToMaybe . filter ((== "") . snd) . reads
