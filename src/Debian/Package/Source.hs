@@ -29,7 +29,7 @@ import Debian.Package.Monad (Trace)
 import Debian.Package.Command (readProcess')
 
 
--- Combinators like Applicative -- for base-4.5.0.0
+-- Combinators like Applicative -- for base-4.5.0.0 - debian wheezy
 
 (<$>) :: Functor m => (a -> b) -> m a -> m b
 (<$>) =  fmap
@@ -210,7 +210,7 @@ haskellPackageDefault rule hname hver mayDevRev =
 
 -- | Generate 'HaskellPackage' with hackage name and debian package meta-info
 haskellPackageFromPackage :: String                       -- ^ Hackage name string
-                          -> Source                      -- ^ Debian package meta info
+                          -> Source                       -- ^ Debian package meta info
                           -> Either String HaskellPackage -- ^ Result
 haskellPackageFromPackage hname pkg = do
   hv <- maybe (Left "Fail to derive hackage version") Right
