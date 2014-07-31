@@ -31,12 +31,12 @@ import Data.List (isPrefixOf)
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Source, origArchiveName, nativeArchiveName, sourceDirName, isNative,
-   HaskellPackage, hackage, package, dpkgParseChangeLog, haskellPackageFromPackage)
+   HaskellPackage, hackage, package, haskellPackageFromPackage)
 import Debian.Package.Monad
   (Build, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
 import Debian.Package.Command
   (chdir, pwd, createDirectoryIfMissing, confirmPath, renameFile, renameDirectory,
-   unpack, packInDir', cabalDebian, rawSystem')
+   unpack, packInDir', cabalDebian, dpkgParseChangeLog, rawSystem')
 import qualified Debian.Package.Cabal as Cabal
 
 

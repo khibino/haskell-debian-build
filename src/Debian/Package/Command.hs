@@ -8,7 +8,7 @@ module Debian.Package.Command
 
        , unpackInDir, unpack, packInDir', packInDir
 
-       , cabalDebian', cabalDebian
+       , cabalDebian', cabalDebian, dpkgParseChangeLog
 
        , debuild
 
@@ -32,6 +32,7 @@ import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
+import Debian.Package.Source (Source, parseChangeLog)
 import Debian.Package.Monad (Trace, traceCommand, traceOut)
 
 
@@ -146,6 +147,13 @@ cabalDebian' mayRev =
 -- | Call /cabal-debian/ command under specified directory
 cabalDebian :: FilePath -> Maybe String -> Trace ()
 cabalDebian dir = withCurrentDir' dir . cabalDebian'
+
+-- | Read debian changelog file and try to parse into 'Source'
+dpkgParseChangeLog :: FilePath -> Trace Source
+dpkgParseChangeLog cpath =  do
+  str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
+  maybe (fail $ "parseChangeLog: failed: " ++ str) return
+    $ parseChangeLog str
 
 
 run :: String -> [String] -> Trace ()

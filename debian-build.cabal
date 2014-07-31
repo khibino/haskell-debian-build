@@ -18,8 +18,8 @@ library
                      Debian.Package.Hackage
                      Debian.Package.Monad
                      Debian.Package.Source
-                     Debian.Package.Command
                      Debian.Package.Cabal
+                     Debian.Package.Command
                      Debian.Package.Build
                      Debian.Package.BuildTool
 
