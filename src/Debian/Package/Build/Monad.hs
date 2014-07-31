@@ -1,5 +1,5 @@
 
-module Debian.Package.Monad
+module Debian.Package.Build.Monad
        ( Trace, runTrace, traceCommand, traceOut
 
        , BaseDir, baseDirCurrent, baseDirSpecify
