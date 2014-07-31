@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Debian.Package.Build
-       ( origArchiveName, nativeArchive
+       ( origArchive, nativeArchive
 
        , withCurrentDir, withBaseCurrentDir
 
