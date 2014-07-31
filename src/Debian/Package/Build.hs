@@ -1,3 +1,13 @@
+-- |
+-- Module      : Debian.Package.Build
+-- Copyright   : 2014 Kei Hibino
+-- License     : BSD3
+--
+-- Maintainer  : ex8k.hibino@gmail.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- This module provides build-tool namespace.
 module Debian.Package.Build
        ( module Debian.Package.Build.Monad
        , module Debian.Package.Build.Command
