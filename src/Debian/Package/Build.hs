@@ -31,7 +31,7 @@ import Data.List (isPrefixOf)
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
   (Source, origArchiveName, nativeArchiveName, sourceDirName, isNative,
-   HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
+   HaskellPackage, hackage, package, dpkgParseChangeLog, haskellPackageFromPackage)
 import Debian.Package.Monad
   (Build, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
 import Debian.Package.Command
@@ -188,7 +188,7 @@ cabalAutogenDebianDir = do
 cabalAutogenSources :: String -> Build (FilePath, FilePath)
 cabalAutogenSources hname = do
   debDir   <-  cabalAutogenDebianDir
-  pkg      <-  liftTrace . parsePackageFromChangeLog $ debDir </> "changelog"
+  pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
   hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
   liftTrace $ renameDirectory debDir (srcDir </> takeFileName debDir)
@@ -212,7 +212,7 @@ findCabalDescription =  MaybeT (getBaseDir >>= liftIO . Cabal.findDescriptionFil
 genSources :: Build (Maybe (FilePath, FilePath))
 genSources =  runMaybeT $
   do clog <- findDebianChangeLog
-     pkg  <- lift . liftTrace $ parsePackageFromChangeLog clog
+     pkg  <- lift . liftTrace $ dpkgParseChangeLog clog
      (do hname <- takeBaseName <$> findCabalDescription
          hpkg  <- either fail return $ haskellPackageFromPackage hname pkg
          lift $ cabalGenSources hpkg

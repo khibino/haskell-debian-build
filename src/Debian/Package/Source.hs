@@ -6,7 +6,7 @@ module Debian.Package.Source
 
        , origArchiveName, nativeArchiveName, sourceDirName, deriveHackageVersion
 
-       , packageFromChangeLog, parsePackageFromChangeLog
+       , parseChangeLog, dpkgParseChangeLog
 
        , HaskellPackage, hackage, package
        , haskellPackageDefault, haskellPackageFromPackage
@@ -160,9 +160,9 @@ deriveHackageVersion =  d . versionBranch . origVersion where
   d _                = Nothing
 
 -- | Try to generate 'Source' from debian changelog string
-packageFromChangeLog :: String        -- ^ dpkg-parsechangelog result string
-                     -> Maybe Source -- ^ Source structure
-packageFromChangeLog log' = do
+parseChangeLog :: String       -- ^ dpkg-parsechangelog result string
+               -> Maybe Source -- ^ Source structure
+parseChangeLog log' = do
   deb  <- mayDebSrc
   dver <- mayDebVer
   return $ mkSource deb dver
@@ -175,11 +175,11 @@ packageFromChangeLog log' = do
       readMaybe' dverS
 
 -- | Read debian changelog file and try to parse into 'Source'
-parsePackageFromChangeLog :: FilePath -> Trace Source
-parsePackageFromChangeLog cpath =  do
+dpkgParseChangeLog :: FilePath -> Trace Source
+dpkgParseChangeLog cpath =  do
   str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
-  maybe (fail $ "parsePackageFromChangeLog: failed: " ++ str) return
-    $ packageFromChangeLog str
+  maybe (fail $ "parseChangeLog: failed: " ++ str) return
+    $ parseChangeLog str
 
 
 -- | Debian source package type for Haskell
