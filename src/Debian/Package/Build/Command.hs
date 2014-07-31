@@ -190,13 +190,11 @@ rebuild dir mode opts = do
   debuild dir ["clean"]
   buildPackage dir mode opts
 
-reinstallPackages :: FilePath -> [String] -> Trace ()
-reinstallPackages dir pkgs {- Need to be shell escapes -} = withCurrentDir' dir $ do
-  system' $ unwords ["yes '' |", "sudo apt-get remove", unwords pkgs, "|| true"]
-  rawSystem' ["sudo", "debi"]
-
 -- | Re-install ghc library packages under specified source package directory
 reinstallGhcLibrary :: FilePath -> BuildMode -> Hackage -> Trace ()
-reinstallGhcLibrary dir mode = reinstallPackages dir . pkgs mode where
-  pkgs All = ghcLibraryBinPackages
-  pkgs Bin = ghcLibraryPackages
+reinstallGhcLibrary dir mode hkg = do
+  let pkgs All = ghcLibraryBinPackages
+      pkgs Bin = ghcLibraryPackages
+  withCurrentDir' dir $ do
+    system' $ unwords ["yes '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
+    rawSystem' ["sudo", "debi"]
