@@ -1,4 +1,4 @@
-module Debian.Package.Cabal
+module Debian.Package.Build.Cabal
        ( findDescriptionFile
        , parsePackageDescription
        , hackageLongName, hackageName, hackageVersion
@@ -25,7 +25,7 @@ import Distribution.PackageDescription.Parse (readPackageDescription)
 
 import Distribution.Simple (defaultMain)
 
-import Debian.Package.Monad (Trace, traceCommand)
+import Debian.Package.Build.Monad (Trace, traceCommand)
 
 
 -- | Find .cabal file

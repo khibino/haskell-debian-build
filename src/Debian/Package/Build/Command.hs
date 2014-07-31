@@ -1,5 +1,5 @@
 
-module Debian.Package.Command
+module Debian.Package.Build.Command
        ( chdir, pwd
 
        , createDirectoryIfMissing, renameDirectory, renameFile
@@ -31,9 +31,9 @@ import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 
-import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
-import Debian.Package.Source (Source, parseChangeLog)
-import Debian.Package.Monad (Trace, traceCommand, traceOut)
+import Debian.Package.Build.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
+import Debian.Package.Build.Source (Source, parseChangeLog)
+import Debian.Package.Build.Monad (Trace, traceCommand, traceOut)
 
 
 splitCommand :: [a] -> (a, [a])

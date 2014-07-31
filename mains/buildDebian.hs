@@ -1,6 +1,6 @@
 import System.Environment (getArgs)
 
-import Debian.Package.BuildTool
+import Debian.Package.Build
   (BuildMode (All), buildPackage,
    baseDirCurrent, defaultConfig, Build, runBuild, liftTrace,
    removeBuildDir, genSources)
