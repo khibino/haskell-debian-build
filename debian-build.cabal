@@ -23,8 +23,7 @@ library
                      Debian.Package.Build
                      Debian.Package.BuildTool
 
-  other-modules:
-                     Debian.Package.Internal
+--  other-modules:
 
   build-depends:       base <5
                      , filepath

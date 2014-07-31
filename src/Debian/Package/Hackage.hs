@@ -20,8 +20,6 @@ import Data.Version (Version (Version), showVersion, parseVersion)
 import Text.ParserCombinators.ReadP (readP_to_S)
 import System.FilePath ((</>), (<.>))
 
-import Debian.Package.Internal (tarGz)
-
 
 -- | Hackage version type
 newtype HackageVersion = HackageVersion (Version)
@@ -97,7 +95,7 @@ hackageLongName hkg = hackageName hkg ++ '-' : show (hackageVersion hkg)
 
 -- | Package archive basename
 hackageArchiveName :: Hackage -> FilePath
-hackageArchiveName hkg = hackageLongName hkg <.> tarGz
+hackageArchiveName hkg = hackageLongName hkg <.> "tar" <.> "gz"
 
 distDir :: String
 distDir =  "dist"
