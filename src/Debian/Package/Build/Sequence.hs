@@ -1,4 +1,13 @@
-
+-- |
+-- Module      : Debian.Package.Build.Command
+-- Copyright   : 2014 Kei Hibino
+-- License     : BSD3
+--
+-- Maintainer  : ex8k.hibino@gmail.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- This module provides build-sequence actions.
 module Debian.Package.Build.Sequence
        ( origArchive, nativeArchive
 

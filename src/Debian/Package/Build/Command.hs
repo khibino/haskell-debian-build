@@ -1,4 +1,13 @@
-
+-- |
+-- Module      : Debian.Package.Build.Command
+-- Copyright   : 2014 Kei Hibino
+-- License     : BSD3
+--
+-- Maintainer  : ex8k.hibino@gmail.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- This module provides trace-able action instances like commands.
 module Debian.Package.Build.Command
        ( chdir, pwd
 

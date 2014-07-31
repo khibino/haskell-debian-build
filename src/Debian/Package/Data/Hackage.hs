@@ -1,3 +1,13 @@
+-- |
+-- Module      : Debian.Package.Data.Hackage
+-- Copyright   : 2014 Kei Hibino
+-- License     : BSD3
+--
+-- Maintainer  : ex8k.hibino@gmail.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- This module provides data types of hackage meta information.
 module Debian.Package.Data.Hackage
        ( HackageVersion, mkHackageVersion, hackageVersionNumbers
 

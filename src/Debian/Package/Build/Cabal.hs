@@ -1,3 +1,13 @@
+-- |
+-- Module      : Debian.Package.Build.Cabal
+-- Copyright   : 2014 Kei Hibino
+-- License     : BSD3
+--
+-- Maintainer  : ex8k.hibino@gmail.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- This module wraps cabal library interfaces to keep sparse dependency to it.
 module Debian.Package.Build.Cabal
        ( findDescriptionFile
        , parsePackageDescription
