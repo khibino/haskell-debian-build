@@ -47,6 +47,7 @@ import Debian.Package.Build.Command
 import qualified Debian.Package.Build.Cabal as Cabal
 
 
+-- | Run 'Bulid' action under specified directory.
 withCurrentDir :: FilePath -> Build a -> Build a
 withCurrentDir dir act = do
   saveDir <- liftIO pwd
@@ -55,20 +56,25 @@ withCurrentDir dir act = do
   liftTrace $ chdir saveDir
   return r
 
+-- Take base-directory from 'Build' action context.
 getBaseDir :: Build FilePath
 getBaseDir =  liftIO pwd >>= askBaseDir
 
+-- | Run 'Build' action under base-directory.
 withBaseCurrentDir :: Build a -> Build a
 withBaseCurrentDir act = do
   baseDir <- getBaseDir
   withCurrentDir baseDir act
 
+-- Take build-directory from 'Build' action context.
 getBuildDir :: Build FilePath
 getBuildDir =  liftIO pwd >>= askBuildDir
 
+-- Pass build-directory to 'Build' action.
 withBuildDir :: (FilePath -> Build a) -> Build a
 withBuildDir f = getBuildDir >>= f
 
+-- | Remove build-directory.
 removeBuildDir :: Build ()
 removeBuildDir = do
   bldDir <- getBuildDir
@@ -76,23 +82,28 @@ removeBuildDir = do
     found <- liftIO $ doesDirectoryExist bldDir
     when found $ rawSystem' ["rm", "-r", bldDir]
 
+-- | Take debian-directory name from 'Build' action context.
 debianDirName :: Build FilePath
 debianDirName =  do
   mayD <- mayDebianDirName <$> askConfig
   return $ fromMaybe "debian" mayD
 
+-- | Take original source archive name from 'Build' action context.
 origArchive :: Source -> Build FilePath
 origArchive pkg =
   withBuildDir $ \w -> return $ w </> origArchiveName pkg
 
+-- | Take debian native source archive name from 'Build' action context.
 nativeArchive :: Source -> Build FilePath
 nativeArchive pkg =
   withBuildDir $ \w -> return $ w </> nativeArchiveName pkg
 
+-- Take source directory from 'Build' action context.
 sourceDir :: Source -> Build FilePath
 sourceDir pkg =
   withBuildDir $ \w -> return $ w </> sourceDirName pkg
 
+-- | Action to copy debian directory from base-directory into specified directory.
 copyDebianDir :: FilePath -> Build ()
 copyDebianDir srcDir = do
   debDN       <- debianDirName
@@ -100,6 +111,7 @@ copyDebianDir srcDir = do
   liftTrace $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
 
 
+-- Setup source directory under build-directory using rsync.
 rsyncGenOrigSourceDir :: Source -> Build FilePath
 rsyncGenOrigSourceDir pkg = do
   srcDir   <- sourceDir pkg
@@ -118,6 +130,8 @@ rsyncGenOrigSourceDir pkg = do
       ++ [baseDir </> ".", srcDir </> "." ]
   return srcDir
 
+-- | Setup source directory and original source archive under
+--   build-directory using rsync.
 rsyncGenOrigSources :: Source -> Build (FilePath, FilePath)
 rsyncGenOrigSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
@@ -127,6 +141,8 @@ rsyncGenOrigSources pkg = do
   liftTrace $ confirmPath srcDir
   return (origPath, srcDir)
 
+-- | Setup native source directory and native source archive under
+--   build-directory using rsync.
 rsyncGenNativeSources :: Source -> Build (FilePath, FilePath)
 rsyncGenNativeSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
@@ -136,12 +152,14 @@ rsyncGenNativeSources pkg = do
   liftTrace $ confirmPath srcDir
   return (nativePath, srcDir)
 
+-- | Setup debian source directory and source archive.
 rsyncGenSources :: Source -> Build (FilePath, FilePath)
 rsyncGenSources pkg
   | isNative pkg = rsyncGenNativeSources pkg
   | otherwise    = rsyncGenOrigSources   pkg
 
 
+-- Setup source archive using Cabal.
 cabalGenArchive :: Hackage -> Build FilePath
 cabalGenArchive hkg = do
   withBaseCurrentDir . liftTrace $ Cabal.sdist []
@@ -150,6 +168,7 @@ cabalGenArchive hkg = do
   liftTrace $ confirmPath apath
   return apath
 
+-- Setup original source archive using Cabal.
 cabalGenOrigArchive :: HaskellPackage -> Build FilePath
 cabalGenOrigArchive hpkg = do
   origPath <- origArchive $ package hpkg
@@ -159,6 +178,7 @@ cabalGenOrigArchive hpkg = do
     renameFile apath origPath
   return origPath
 
+-- | Setup original source directory and archive using Cabal.
 cabalGenOrigSources :: HaskellPackage -> Build (FilePath, FilePath)
 cabalGenOrigSources hpkg = do
   origPath <- cabalGenOrigArchive hpkg
@@ -171,6 +191,7 @@ cabalGenOrigSources hpkg = do
     confirmPath srcDir
   return (origPath, srcDir)
 
+-- | Setup source directory and archive using Cabal.
 cabalGenSources :: HaskellPackage -> Build (FilePath, FilePath)
 cabalGenSources hpkg = do
   pair@(_, srcDir) <- cabalGenOrigSources hpkg
@@ -192,6 +213,7 @@ cabalAutogenDebianDir = do
     renameDirectory tmpDD debDir
   return debDir
 
+-- | Setup source directory and archive using Cabal and cabal-debian.
 cabalAutogenSources :: String -> Build (FilePath, FilePath)
 cabalAutogenSources hname = do
   debDir   <-  cabalAutogenDebianDir
@@ -216,6 +238,7 @@ findDebianChangeLog =  MaybeT $ do
 findCabalDescription :: MaybeT Build FilePath
 findCabalDescription =  MaybeT (getBaseDir >>= liftIO . Cabal.findDescriptionFile)
 
+-- | On the fly setup of source directory and archive.
 genSources :: Build (Maybe (FilePath, FilePath))
 genSources =  runMaybeT $
   do clog <- findDebianChangeLog
