@@ -1,4 +1,14 @@
-
+-- |
+-- Module      : Debian.Package.Build.Monad
+-- Copyright   : 2014 Kei Hibino
+-- License     : BSD3
+--
+-- Maintainer  : ex8k.hibino@gmail.com
+-- Stability   : experimental
+-- Portability : portable
+--
+-- This module provides monad types to control build
+-- scripts.
 module Debian.Package.Build.Monad
        ( Trace, runTrace, traceCommand, traceOut
 

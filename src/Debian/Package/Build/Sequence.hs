@@ -26,8 +26,8 @@ import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.Maybe (fromMaybe)
 import Data.List (isPrefixOf)
 
-import Debian.Package.Build.Hackage (Hackage, hackageLongName, hackageArchive)
-import Debian.Package.Build.Source
+import Debian.Package.Data.Hackage (Hackage, hackageLongName, hackageArchive)
+import Debian.Package.Data.Source
   (Source, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, haskellPackageFromPackage)
 import Debian.Package.Build.Monad

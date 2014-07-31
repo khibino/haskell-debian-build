@@ -31,8 +31,8 @@ import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 
-import Debian.Package.Build.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
-import Debian.Package.Build.Source (Source, parseChangeLog)
+import Debian.Package.Data.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
+import Debian.Package.Data.Source (Source, parseChangeLog)
 import Debian.Package.Build.Monad (Trace, traceCommand, traceOut)
 
 
