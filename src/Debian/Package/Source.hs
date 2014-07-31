@@ -21,7 +21,6 @@ import Data.Version (Version (Version, versionBranch), showVersion, parseVersion
 import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
 import System.FilePath ((<.>))
 
-import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage
   (HackageVersion, mkHackageVersion, hackageVersionNumbers,
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
@@ -144,11 +143,11 @@ isNative =  isNative' . version
 
 -- | Original source archive basename
 origArchiveName :: Source -> FilePath
-origArchiveName pkg = sourceName pkg ++ '_' : showVersion (origVersion pkg) <.> "orig" <.> tarGz
+origArchiveName pkg = sourceName pkg ++ '_' : showVersion (origVersion pkg) <.> "orig" <.> "tar" <.> "gz"
 
 -- | Debian native archive basename
 nativeArchiveName :: Source -> String
-nativeArchiveName pkg = sourceName pkg ++ '_' : show (version pkg) <.> tarGz
+nativeArchiveName pkg = sourceName pkg ++ '_' : show (version pkg) <.> "tar" <.> "gz"
 
 -- | Source directory basename
 sourceDirName :: Source -> FilePath

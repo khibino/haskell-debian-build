@@ -31,7 +31,6 @@ import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 
-import Debian.Package.Internal (tarGz)
 import Debian.Package.Hackage (Hackage, ghcLibraryBinPackages, ghcLibraryPackages)
 import Debian.Package.Monad (Trace, traceCommand, traceOut)
 
@@ -122,7 +121,7 @@ packInDir' pdir apath wdir = do
 -- | Pack directory into same location .tar.gz under working directory
 packInDir :: FilePath -> FilePath -> Trace ()
 pdir `packInDir` wdir =
-  packInDir' pdir (pdir <.> tarGz) wdir
+  packInDir' pdir (pdir <.> "tar" <.> "gz") wdir
 
 
 -- | Run action under specified directory
