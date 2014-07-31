@@ -1,5 +1,4 @@
-
-module Debian.Package.Build.Hackage
+module Debian.Package.Data.Hackage
        ( HackageVersion, mkHackageVersion, hackageVersionNumbers
 
        , Hackage, mkHackage, hackageName, hackageVersion

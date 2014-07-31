@@ -1,5 +1,5 @@
 
-module Debian.Package.Build.Source
+module Debian.Package.Data.Source
        ( DebianVersion, versionFromHackageVersion
 
        , Source, mkSource, sourceName, version, origVersion, isNative
@@ -21,7 +21,7 @@ import Data.Version (Version (Version, versionBranch), showVersion, parseVersion
 import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
 import System.FilePath ((<.>))
 
-import Debian.Package.Build.Hackage
+import Debian.Package.Data.Hackage
   (HackageVersion, mkHackageVersion, hackageVersionNumbers,
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
 
