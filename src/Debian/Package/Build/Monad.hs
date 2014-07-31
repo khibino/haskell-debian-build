@@ -7,8 +7,7 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- This module provides monad types to control build
--- scripts.
+-- This module provides monad types to control build scripts.
 module Debian.Package.Build.Monad
        ( Trace, runTrace, traceCommand, traceOut
 
@@ -32,7 +31,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
 
 
--- | Monad type with trace flag
+-- | Action type with trace flag
 type Trace = ReaderT Bool IO
 
 -- | Run 'Trace' monad
