@@ -30,7 +30,7 @@ import Data.List (isPrefixOf)
 
 import Debian.Package.Hackage (Hackage, hackageLongName, hackageArchive)
 import Debian.Package.Source
-  (Package, origArchiveName, nativeArchiveName, sourceDirName, isNative,
+  (Source, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, parsePackageFromChangeLog, haskellPackageFromPackage)
 import Debian.Package.Monad
   (Build, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
@@ -74,15 +74,15 @@ debianDirName =  do
   mayD <- mayDebianDirName <$> askConfig
   return $ fromMaybe "debian" mayD
 
-origArchive :: Package -> Build FilePath
+origArchive :: Source -> Build FilePath
 origArchive pkg =
   withBuildDir $ \w -> return $ w </> origArchiveName pkg
 
-nativeArchive :: Package -> Build FilePath
+nativeArchive :: Source -> Build FilePath
 nativeArchive pkg =
   withBuildDir $ \w -> return $ w </> nativeArchiveName pkg
 
-sourceDir :: Package -> Build FilePath
+sourceDir :: Source -> Build FilePath
 sourceDir pkg =
   withBuildDir $ \w -> return $ w </> sourceDirName pkg
 
@@ -93,7 +93,7 @@ copyDebianDir srcDir = do
   liftTrace $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
 
 
-rsyncGenOrigSourceDir :: Package -> Build FilePath
+rsyncGenOrigSourceDir :: Source -> Build FilePath
 rsyncGenOrigSourceDir pkg = do
   srcDir   <- sourceDir pkg
   debDN    <- debianDirName
@@ -111,7 +111,7 @@ rsyncGenOrigSourceDir pkg = do
       ++ [baseDir </> ".", srcDir </> "." ]
   return srcDir
 
-rsyncGenOrigSources :: Package -> Build (FilePath, FilePath)
+rsyncGenOrigSources :: Source -> Build (FilePath, FilePath)
 rsyncGenOrigSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
   origPath  <- origArchive pkg
@@ -120,7 +120,7 @@ rsyncGenOrigSources pkg = do
   liftTrace $ confirmPath srcDir
   return (origPath, srcDir)
 
-rsyncGenNativeSources :: Package -> Build (FilePath, FilePath)
+rsyncGenNativeSources :: Source -> Build (FilePath, FilePath)
 rsyncGenNativeSources pkg = do
   srcDir <- rsyncGenOrigSourceDir pkg
   copyDebianDir srcDir
@@ -129,7 +129,7 @@ rsyncGenNativeSources pkg = do
   liftTrace $ confirmPath srcDir
   return (nativePath, srcDir)
 
-rsyncGenSources :: Package -> Build (FilePath, FilePath)
+rsyncGenSources :: Source -> Build (FilePath, FilePath)
 rsyncGenSources pkg
   | isNative pkg = rsyncGenNativeSources pkg
   | otherwise    = rsyncGenOrigSources   pkg

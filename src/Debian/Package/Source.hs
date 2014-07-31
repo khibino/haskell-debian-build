@@ -2,7 +2,7 @@
 module Debian.Package.Source
        ( DebianVersion, versionFromHackageVersion
 
-       , Package, mkPackage, sourceName, version, origVersion, isNative
+       , Source, mkSource, sourceName, version, origVersion, isNative
 
        , origArchiveName, nativeArchiveName, sourceDirName, deriveHackageVersion
 
@@ -120,53 +120,53 @@ readMaybe' =  fmap fst . listToMaybe . filter ((== "") . snd) . reads
 
 
 -- | Debian source package type, name with version
-data Package = Package String DebianVersion  deriving Show
+data Source = Source String DebianVersion  deriving Show
 
 -- | Make 'Package'
-mkPackage :: String -> DebianVersion -> Package
-mkPackage =  Package
+mkSource :: String -> DebianVersion -> Source
+mkSource =  Source
 
 -- | Source package name of 'Package'
-sourceName :: Package -> String
-sourceName (Package n _) = n
+sourceName :: Source -> String
+sourceName (Source n _) = n
 
 -- | Debian version of 'Package'
-version :: Package -> DebianVersion
-version (Package _ v) = v
+version :: Source -> DebianVersion
+version (Source _ v) = v
 
 -- | Version without debian revision
-origVersion :: Package -> Version
+origVersion :: Source -> Version
 origVersion =  origVersion' . version
 
 -- | Is debian-native or not
-isNative :: Package -> Bool
+isNative :: Source -> Bool
 isNative =  isNative' . version
 
 -- | Original source archive basename
-origArchiveName :: Package -> FilePath
+origArchiveName :: Source -> FilePath
 origArchiveName pkg = sourceName pkg ++ '_' : showVersion (origVersion pkg) <.> "orig" <.> tarGz
 
 -- | Debian native archive basename
-nativeArchiveName :: Package -> String
+nativeArchiveName :: Source -> String
 nativeArchiveName pkg = sourceName pkg ++ '_' : show (version pkg) <.> tarGz
 
 -- | Source directory basename
-sourceDirName :: Package -> FilePath
+sourceDirName :: Source -> FilePath
 sourceDirName pkg = sourceName pkg ++ '-' : showVersion (origVersion pkg)
 
 -- | Try to make 'HackageVersion' from 'Package'
-deriveHackageVersion :: Package -> Maybe HackageVersion
+deriveHackageVersion :: Source -> Maybe HackageVersion
 deriveHackageVersion =  d . versionBranch . origVersion where
   d [v0, v1, v2, v3] = Just $ mkHackageVersion v0 v1 v2 v3
   d _                = Nothing
 
 -- | Try to generate 'Package' from debian changelog string
 packageFromChangeLog :: String        -- ^ dpkg-parsechangelog result string
-                     -> Maybe Package -- ^ Package structure
+                     -> Maybe Source -- ^ Source structure
 packageFromChangeLog log' = do
   deb  <- mayDebSrc
   dver <- mayDebVer
-  return $ Package deb dver
+  return $ Source deb dver
   where
     pairs = map (second tail . break (== ' ')) . lines $ log'
     lookup' = (`lookup` pairs)
@@ -176,7 +176,7 @@ packageFromChangeLog log' = do
       readMaybe' dverS
 
 -- | Read debian changelog file and try to parse into 'Package'
-parsePackageFromChangeLog :: FilePath -> Trace Package
+parsePackageFromChangeLog :: FilePath -> Trace Source
 parsePackageFromChangeLog cpath =  do
   str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
   maybe (fail $ "parsePackageFromChangeLog: failed: " ++ str) return
@@ -184,14 +184,14 @@ parsePackageFromChangeLog cpath =  do
 
 
 -- | Debian source package type for Haskell
-data HaskellPackage = HaskellPackage Hackage Package deriving Show
+data HaskellPackage = HaskellPackage Hackage Source deriving Show
 
 -- | 'Hackage' meta-info of 'HaskellPackage'
 hackage :: HaskellPackage -> Hackage
 hackage (HaskellPackage h _) = h
 
 -- | Debian source package meta-info of 'HaskellPackage'
-package :: HaskellPackage -> Package
+package :: HaskellPackage -> Source
 package (HaskellPackage _ p) = p
 
 -- | Generate 'HaskellPackage' type from debian package name and version
@@ -204,13 +204,13 @@ haskellPackageDefault :: NameRule
 haskellPackageDefault rule hname hver mayDevRev =
   HaskellPackage
   (mkHackageDefault rule hname hver)
-  (mkPackage sn (versionFromHackageVersion hver mayDevRev))
+  (mkSource sn (versionFromHackageVersion hver mayDevRev))
   where
     (sn, _) = debianNamesFromSourceName rule hname
 
 -- | Generate 'HaskellPackage' with hackage name and debian package meta-info
 haskellPackageFromPackage :: String                       -- ^ Hackage name string
-                          -> Package                      -- ^ Debian package meta info
+                          -> Source                      -- ^ Debian package meta info
                           -> Either String HaskellPackage -- ^ Result
 haskellPackageFromPackage hname pkg = do
   hv <- maybe (Left "Fail to derive hackage version") Right
