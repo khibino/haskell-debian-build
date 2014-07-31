@@ -122,15 +122,15 @@ readMaybe' =  fmap fst . listToMaybe . filter ((== "") . snd) . reads
 -- | Debian source package type, name with version
 data Source = Source String DebianVersion  deriving Show
 
--- | Make 'Package'
+-- | Make 'Source'
 mkSource :: String -> DebianVersion -> Source
 mkSource =  Source
 
--- | Source package name of 'Package'
+-- | Source package name of 'Source'
 sourceName :: Source -> String
 sourceName (Source n _) = n
 
--- | Debian version of 'Package'
+-- | Debian version of 'Source'
 version :: Source -> DebianVersion
 version (Source _ v) = v
 
@@ -154,19 +154,19 @@ nativeArchiveName pkg = sourceName pkg ++ '_' : show (version pkg) <.> tarGz
 sourceDirName :: Source -> FilePath
 sourceDirName pkg = sourceName pkg ++ '-' : showVersion (origVersion pkg)
 
--- | Try to make 'HackageVersion' from 'Package'
+-- | Try to make 'HackageVersion' from 'Source'
 deriveHackageVersion :: Source -> Maybe HackageVersion
 deriveHackageVersion =  d . versionBranch . origVersion where
   d [v0, v1, v2, v3] = Just $ mkHackageVersion v0 v1 v2 v3
   d _                = Nothing
 
--- | Try to generate 'Package' from debian changelog string
+-- | Try to generate 'Source' from debian changelog string
 packageFromChangeLog :: String        -- ^ dpkg-parsechangelog result string
                      -> Maybe Source -- ^ Source structure
 packageFromChangeLog log' = do
   deb  <- mayDebSrc
   dver <- mayDebVer
-  return $ Source deb dver
+  return $ mkSource deb dver
   where
     pairs = map (second tail . break (== ' ')) . lines $ log'
     lookup' = (`lookup` pairs)
@@ -175,7 +175,7 @@ packageFromChangeLog log' = do
       dverS <- lookup' "Version:"
       readMaybe' dverS
 
--- | Read debian changelog file and try to parse into 'Package'
+-- | Read debian changelog file and try to parse into 'Source'
 parsePackageFromChangeLog :: FilePath -> Trace Source
 parsePackageFromChangeLog cpath =  do
   str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
