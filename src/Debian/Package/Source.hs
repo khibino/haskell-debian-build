@@ -6,7 +6,7 @@ module Debian.Package.Source
 
        , origArchiveName, nativeArchiveName, sourceDirName, deriveHackageVersion
 
-       , parseChangeLog, dpkgParseChangeLog
+       , parseChangeLog
 
        , HaskellPackage, hackage, package
        , haskellPackageDefault, haskellPackageFromPackage
@@ -24,8 +24,6 @@ import System.FilePath ((<.>))
 import Debian.Package.Hackage
   (HackageVersion, mkHackageVersion, hackageVersionNumbers,
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
-import Debian.Package.Monad (Trace)
-import Debian.Package.Command (readProcess')
 
 
 -- Combinators like Applicative -- for base-4.5.0.0 - debian wheezy
@@ -173,13 +171,6 @@ parseChangeLog log' = do
     mayDebVer = do
       dverS <- lookup' "Version:"
       readMaybe' dverS
-
--- | Read debian changelog file and try to parse into 'Source'
-dpkgParseChangeLog :: FilePath -> Trace Source
-dpkgParseChangeLog cpath =  do
-  str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
-  maybe (fail $ "parseChangeLog: failed: " ++ str) return
-    $ parseChangeLog str
 
 
 -- | Debian source package type for Haskell
