@@ -19,13 +19,13 @@ module Debian.Package.Build.Command
 
        , cabalDebian', cabalDebian, dpkgParseChangeLog
 
-       , debuild
+       , debuild, debi
 
        , BuildMode (..)
 
        , buildPackage, rebuild
 
-       , reinstallGhcLibrary
+       , removeGhcLibrary
 
        , withCurrentDir'
 
@@ -174,6 +174,10 @@ debuild' =  run "debuild"
 debuild :: FilePath -> [String] -> Trace ()
 debuild dir = withCurrentDir' dir . debuild'
 
+-- | Install packages under specified source package directory
+debi :: FilePath -> [String] -> Trace ()
+debi dir = withCurrentDir' dir . rawSystem' . (["sudo", "debi"] ++)
+
 -- | Build mode, all or binary only
 data BuildMode = All | Bin
 
@@ -190,10 +194,9 @@ rebuild dir mode opts = do
   debuild dir ["clean"]
   buildPackage dir mode opts
 
--- | Re-install ghc library packages under specified source package directory
-reinstallGhcLibrary :: FilePath -> BuildMode -> Hackage -> Trace ()
-reinstallGhcLibrary dir mode hkg = do
+-- | Remove ghc library packages under specified source package directory
+removeGhcLibrary :: BuildMode -> Hackage -> Trace ()
+removeGhcLibrary mode hkg = do
   let pkgs All = ghcLibraryBinPackages
       pkgs Bin = ghcLibraryPackages
   system' $ unwords ["yes '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
-  withCurrentDir' dir $ rawSystem' ["sudo", "debi"]
