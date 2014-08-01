@@ -10,6 +10,7 @@
 -- This module provides monad types to control build scripts.
 module Debian.Package.Build.Monad
        ( Trace, runTrace, traceCommand, traceOut
+       , bracketTrace, bracketTrace_
 
        , BaseDir, baseDirCurrent, baseDirSpecify
 
@@ -20,6 +21,7 @@ module Debian.Package.Build.Monad
        , Config, defaultConfig, buildDir, mayDebianDirName, trace
 
        , Build, liftTrace, runBuild, askConfig
+       , bracketBuild, bracketBuild_
        ) where
 
 import System.FilePath ((</>))
@@ -29,7 +31,30 @@ import Control.Applicative ((<$>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
+import Control.Exception (bracket)
 
+
+readerBracket :: Monad m
+             => (m a -> (a -> m b) -> (a -> m c) -> m c)
+             -> ReaderT r m a
+             -> (a -> ReaderT r m b)
+             -> (a -> ReaderT r m c)
+             -> ReaderT r m c
+readerBracket brkt open close body = do
+  r <- ask
+  lift $ brkt
+    (runReaderT open r)
+    (\a -> runReaderT (close a) r)
+    (\a -> runReaderT (body a) r)
+
+toBracket_ :: Monad m
+           => (m a -> (a -> m b) -> (a -> m c) -> m c)
+           -> m a
+           -> m b
+           -> m c
+           -> m c
+toBracket_ brkt start end body =
+  brkt start (const end) (const body)
 
 -- | Action type with trace flag
 type Trace = ReaderT Bool IO
@@ -42,6 +67,14 @@ traceIO :: IO () -> Trace ()
 traceIO printIO = do
   t <- ask
   when t $ lift printIO
+
+-- | bracket for 'Trace' monad
+bracketTrace :: Trace a -> (a -> Trace b) -> (a -> Trace c) -> Trace c
+bracketTrace =  readerBracket bracket
+
+-- | bracket_ for 'Trace' monad
+bracketTrace_ :: Trace a -> Trace b -> Trace c -> Trace c
+bracketTrace_ =  toBracket_ bracketTrace
 
 tprint :: Char -> String -> IO ()
 tprint pc s = do
@@ -112,6 +145,14 @@ liftTrace t = lift . ReaderT $ runTrace t . trace
 -- | Run 'Build' configuration monad
 runBuild :: Build a -> BaseDir -> Config -> IO a
 runBuild b =  runReaderT . runReaderT b
+
+-- | bracket for 'Build' monad
+bracketBuild :: Build a -> (a -> Build b) -> (a -> Build c) -> Build c
+bracketBuild =  readerBracket $ readerBracket bracket
+
+-- | bracket_ for 'Build' monad
+bracketBuild_ :: Build a -> Build b -> Build c -> Build c
+bracketBuild_ =  toBracket_ bracketBuild
 
 -- | Get base directory in 'Build' monad
 askBaseDir :: FilePath -> Build FilePath
