@@ -195,6 +195,5 @@ reinstallGhcLibrary :: FilePath -> BuildMode -> Hackage -> Trace ()
 reinstallGhcLibrary dir mode hkg = do
   let pkgs All = ghcLibraryBinPackages
       pkgs Bin = ghcLibraryPackages
-  withCurrentDir' dir $ do
-    system' $ unwords ["yes '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
-    rawSystem' ["sudo", "debi"]
+  system' $ unwords ["yes '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
+  withCurrentDir' dir $ rawSystem' ["sudo", "debi"]
