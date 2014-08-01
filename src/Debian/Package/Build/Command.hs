@@ -41,7 +41,7 @@ import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 
 import Debian.Package.Data (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, Source, parseChangeLog)
-import Debian.Package.Build.Monad (Trace, traceCommand, traceOut)
+import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, bracketTrace_)
 
 
 splitCommand :: [a] -> (a, [a])
@@ -137,10 +137,10 @@ pdir `packInDir` wdir =
 withCurrentDir' :: FilePath -> Trace a -> Trace a
 withCurrentDir' dir act = do
   saveDir <- lift pwd
-  chdir dir
-  r <- act
-  chdir saveDir
-  return r
+  bracketTrace_
+    (chdir dir)
+    (chdir saveDir)
+    act
 
 -- | Just call /cabal-debian/ command
 cabalDebian' :: Maybe String -> Trace ()

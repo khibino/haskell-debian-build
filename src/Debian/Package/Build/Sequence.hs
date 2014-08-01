@@ -40,7 +40,7 @@ import Debian.Package.Data
    Source, origArchiveName, nativeArchiveName, sourceDirName, isNative,
    HaskellPackage, hackage, package, haskellPackageFromPackage)
 import Debian.Package.Build.Monad
-  (Build, liftTrace, Config (..), askConfig, askBaseDir, askBuildDir)
+  (Build, liftTrace, bracketBuild_, Config (..), askConfig, askBaseDir, askBuildDir)
 import Debian.Package.Build.Command
   (chdir, pwd, createDirectoryIfMissing, confirmPath, renameFile, renameDirectory,
    unpack, packInDir', cabalDebian, dpkgParseChangeLog, rawSystem')
@@ -51,10 +51,10 @@ import qualified Debian.Package.Build.Cabal as Cabal
 withCurrentDir :: FilePath -> Build a -> Build a
 withCurrentDir dir act = do
   saveDir <- liftIO pwd
-  liftTrace $ chdir dir
-  r <- act
-  liftTrace $ chdir saveDir
-  return r
+  bracketBuild_
+    (liftTrace $ chdir dir)
+    (liftTrace $ chdir saveDir)
+    act
 
 -- Take base-directory from 'Build' action context.
 getBaseDir :: Build FilePath
