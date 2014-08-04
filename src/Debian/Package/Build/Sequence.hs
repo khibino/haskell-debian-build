@@ -9,13 +9,13 @@
 --
 -- This module provides build-sequence actions.
 module Debian.Package.Build.Sequence
-       ( origArchive, nativeArchive
+       ( origArchive, nativeArchive, sourceDir
 
        , withCurrentDir, withBaseCurrentDir
 
        , removeBuildDir
 
-       , sourceDir, copyDebianDir
+       , copyDebianDir
 
        , rsyncGenOrigSources, rsyncGenNativeSources, rsyncGenSources
 
