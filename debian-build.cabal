@@ -36,10 +36,10 @@ library
   hs-source-dirs:      src
   ghc-options:       -Wall
 
-executable buildDebian
+executable odebuild
   build-depends:       base <5
                      , debian-build
 
-  main-is: buildDebian.hs
+  main-is: odebuild.hs
   hs-source-dirs:      mains
   ghc-options:       -Wall
