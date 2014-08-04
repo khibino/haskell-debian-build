@@ -132,7 +132,7 @@ data Config =
 
 -- | Default configuration
 defaultConfig :: (Config, Bool)
-defaultConfig =  (Config (buildDirRelative ".deb-build") Nothing, True)
+defaultConfig =  (Config (buildDirRelative ".debian-build") Nothing, True)
 
 -- | Monad type with build base directory and build configuration.
 type Build = ReaderT BaseDir (ReaderT Config Trace)
