@@ -16,4 +16,4 @@ build opts = do
 main :: IO ()
 main =  do
   args <- getArgs
-  runBuild (build args) baseDirCurrent defaultConfig
+  uncurry (runBuild (build args) baseDirCurrent) defaultConfig
