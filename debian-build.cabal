@@ -43,3 +43,11 @@ executable odebuild
   main-is: odebuild.hs
   hs-source-dirs:      mains
   ghc-options:       -Wall
+
+source-repository head
+  type:       git
+  location:   https://github.com/khibino/haskell-debian-build
+
+source-repository head
+  type:       mercurial
+  location:   https://bitbucket.org/khibino/haskell-debian-build
