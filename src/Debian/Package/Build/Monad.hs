@@ -18,7 +18,7 @@ module Debian.Package.Build.Monad
 
        , BuildDir, buildDirRelative, buildDirAbsolute
 
-       , Config, defaultConfig, buildDir, mayDebianDirName, trace
+       , Config, defaultConfig, buildDir, mayDebianDirName
 
        , Build, liftTrace, runBuild, askConfig
        , bracketBuild, bracketBuild_
@@ -30,7 +30,7 @@ import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader (ReaderT (ReaderT), ask, runReaderT)
+import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 import Control.Exception (bracket)
 
 
@@ -128,27 +128,26 @@ data Config =
   Config
   { buildDir         :: BuildDir        -- ^ Specify build dir
   , mayDebianDirName :: Maybe FilePath  -- ^ Name of debian directory
-  , trace            :: Bool            -- ^ Trace flag used when 'liftTrace'
   } deriving Show
 
 -- | Default configuration
-defaultConfig :: Config
-defaultConfig =  Config (buildDirRelative ".deb-build") Nothing True
+defaultConfig :: (Config, Bool)
+defaultConfig =  (Config (buildDirRelative ".deb-build") Nothing, True)
 
 -- | Monad type with build base directory and build configuration.
-type Build = ReaderT BaseDir (ReaderT Config IO)
+type Build = ReaderT BaseDir (ReaderT Config Trace)
 
 -- | Lift from 'Trace' monad into monad with 'Build' configuration.
 liftTrace :: Trace a -> Build a
-liftTrace t = lift . ReaderT $ runTrace t . trace
+liftTrace =  lift . lift
 
 -- | Run 'Build' configuration monad
-runBuild :: Build a -> BaseDir -> Config -> IO a
-runBuild b =  runReaderT . runReaderT b
+runBuild :: Build a -> BaseDir -> Config -> Bool -> IO a
+runBuild b bd = runTrace . (runReaderT $ runReaderT b bd)
 
 -- | bracket for 'Build' monad
 bracketBuild :: Build a -> (a -> Build b) -> (a -> Build c) -> Build c
-bracketBuild =  readerBracket $ readerBracket bracket
+bracketBuild =  readerBracket $ readerBracket bracketTrace
 
 -- | bracket_ for 'Build' monad
 bracketBuild_ :: Build a -> Build b -> Build c -> Build c
