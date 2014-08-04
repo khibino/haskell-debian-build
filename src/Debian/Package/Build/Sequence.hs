@@ -15,7 +15,7 @@ module Debian.Package.Build.Sequence
 
        , removeBuildDir
 
-       , copyDebianDir
+       , sourceDir, copyDebianDir
 
        , rsyncGenOrigSources, rsyncGenNativeSources, rsyncGenSources
 
@@ -27,7 +27,7 @@ module Debian.Package.Build.Sequence
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
 import System.Directory
   (doesDirectoryExist, doesFileExist)
-import Control.Applicative ((<$>), (<|>))
+import Control.Applicative (pure, (<$>), (<*>), (<|>))
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
@@ -98,7 +98,7 @@ nativeArchive :: Source -> Build FilePath
 nativeArchive pkg =
   withBuildDir $ \w -> return $ w </> nativeArchiveName pkg
 
--- Take source directory from 'Build' action context.
+-- | Take source directory from 'Build' action context.
 sourceDir :: Source -> Build FilePath
 sourceDir pkg =
   withBuildDir $ \w -> return $ w </> sourceDirName pkg
@@ -214,14 +214,14 @@ cabalAutogenDebianDir = do
   return debDir
 
 -- | Setup source directory and archive using Cabal and cabal-debian.
-cabalAutogenSources :: String -> Build (FilePath, FilePath)
+cabalAutogenSources :: String -> Build ((FilePath, FilePath), HaskellPackage)
 cabalAutogenSources hname = do
   debDir   <-  cabalAutogenDebianDir
   pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
   hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
   liftTrace $ renameDirectory debDir (srcDir </> takeFileName debDir)
-  return pair
+  return (pair, hpkg)
 
 
 findDebianChangeLog :: MaybeT Build FilePath
@@ -239,17 +239,20 @@ findCabalDescription :: MaybeT Build FilePath
 findCabalDescription =  MaybeT (getBaseDir >>= liftIO . Cabal.findDescriptionFile)
 
 -- | On the fly setup of source directory and archive.
-genSources :: Build (Maybe (FilePath, FilePath))
+genSources :: Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))
 genSources =  runMaybeT $
   do clog <- findDebianChangeLog
-     pkg  <- lift . liftTrace $ dpkgParseChangeLog clog
+     src  <- lift . liftTrace $ dpkgParseChangeLog clog
      (do hname <- takeBaseName <$> findCabalDescription
-         hpkg  <- either fail return $ haskellPackageFromPackage hname pkg
-         lift $ cabalGenSources hpkg
+         hpkg  <- either fail return $ haskellPackageFromPackage hname src
+         p <- lift $ cabalGenSources hpkg
+         return (p, src, Just $ hackage hpkg)
       <|>
-      do lift $ rsyncGenSources pkg)
+      do lift $ (,,) <$> rsyncGenSources src <*> pure src <*> pure Nothing)
   <|>
   do hname <- takeBaseName <$> findCabalDescription
-     lift $ cabalAutogenSources hname
+     lift $ do
+       (p, hpkg) <- cabalAutogenSources hname
+       return (p, package hpkg, Just $ hackage hpkg)
   <|>
   do fail "No source generate rule found."
