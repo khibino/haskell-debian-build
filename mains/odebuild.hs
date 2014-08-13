@@ -1,5 +1,6 @@
 import System.Environment (getProgName, getArgs)
 import Control.Monad (void)
+import Data.List (stripPrefix)
 
 import Debian.Package.Data (Source, Hackage)
 import Debian.Package.Build
@@ -20,41 +21,51 @@ install' src = do
 help :: IO ()
 help =  do
   prog <- getProgName
-  let opts = "<debuild options>"
+  let rev  = "[--revision=<debian revision>]"
+      opts = "[debuild options]"
   putStr . unlines $ map unwords
     [[prog, "clean"],
-     [prog, "source"],
-     [prog, "build", opts],
-     [prog, "install", opts],
-     [prog, "reinstall", opts, "  -- Remove and install support only for Haskell"] ]
+     [prog, "source", rev],
+     [prog, "build", rev, opts],
+     [prog, "install", rev, opts],
+     [prog, "reinstall", rev, opts],
+     ["-- reinstall (Remove and install) support only for Haskell"],
+     ["-- Revision string may use on auto-generating debian directory."]]
 
 clean :: Build ()
 clean =  removeBuildDir
 
-source :: Build ((FilePath, FilePath), Source, Maybe Hackage)
-source =  do
+source :: Maybe String -> Build ((FilePath, FilePath), Source, Maybe Hackage)
+source mayRev = do
   clean
-  maybe (fail "Illegal state: genSources") return =<< genSources
+  maybe (fail "Illegal state: genSources") return =<< genSources mayRev
 
-build :: [String] -> Build (Source, Maybe Hackage)
-build opts = do
-  ((_, dir), src, mayH) <- source
+build :: Maybe String -> [String] -> Build (Source, Maybe Hackage)
+build mayRev opts = do
+  ((_, dir), src, mayH) <- source mayRev
   liftTrace $ buildPackage dir All opts
   return (src, mayH)
 
-install :: [String] -> Build ()
-install args = do
-  (src, _mayH) <- build args
+install :: Maybe String -> [String] -> Build ()
+install mayRev args = do
+  (src, _mayH) <- build mayRev args
   install' src
 
-reinstall :: [String] -> Build ()
-reinstall args = do
-  (src, mayH) <- build args
+reinstall :: Maybe String -> [String] -> Build ()
+reinstall mayRev args = do
+  (src, mayH) <- build mayRev args
   maybe (return ()) remove' mayH
   install' src
 
 run :: Build a -> IO a
 run b = uncurry (runBuild b baseDirCurrent) defaultConfig
+
+parseArgs :: [String] -> (Maybe String, [String])
+parseArgs =  d where
+  d aas@(a:as) = case stripPrefix "--revision=" a of
+    r@(Just _)  ->  (r, as)
+    Nothing     ->  (Nothing, aas)
+  d []         =    (Nothing, [])
 
 main :: IO ()
 main =  do
@@ -63,10 +74,14 @@ main =  do
     "-h"     : _          ->  help
     "--help" : _          ->  help
     "help"   : _          ->  help
-    as1  ->  run $ case  as1  of
-      "clean" : _         ->  clean
-      "source" : _        ->  void $ source
-      "build" : args      ->  void $ build args
-      "install" : args    ->  install args
-      "reinstall" : args  ->  reinstall args
-      args                ->  void $ build args
+    as2@(c : as1)  ->  do
+      let (mayRev, args) = parseArgs as1
+      run $ case c of
+        "clean"         ->    clean
+        "source"        ->    void $ source mayRev
+        "build"         ->    void $ build mayRev args
+        "install"       ->    install mayRev args
+        "reinstall"     ->    reinstall mayRev args
+        _               ->    void . uncurry build $ parseArgs as2
+
+    []                  -> run . void $ build Nothing []
