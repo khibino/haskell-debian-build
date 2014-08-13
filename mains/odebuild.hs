@@ -8,10 +8,6 @@ import Debian.Package.Build
    sourceDir, removeBuildDir, genSources, removeGhcLibrary)
 
 
-source' :: Build ((FilePath, FilePath), Source, Maybe Hackage)
-source' =
-  maybe (fail "Illegal state: genSources") return =<< genSources
-
 remove' :: Hackage -> Build ()
 remove' =  liftTrace . removeGhcLibrary All
 
@@ -24,15 +20,25 @@ install' src = do
 help :: IO ()
 help =  do
   prog <- getProgName
+  let opts = "<debuild options>"
   putStr . unlines $ map unwords
-    [[prog, "build"],
-     [prog, "install"],
-     [prog, "reinstall", "  -- Remove and install support only for Haskell"] ]
+    [[prog, "clean"],
+     [prog, "source"],
+     [prog, "build", opts],
+     [prog, "install", opts],
+     [prog, "reinstall", opts, "  -- Remove and install support only for Haskell"] ]
+
+clean :: Build ()
+clean =  removeBuildDir
+
+source :: Build ((FilePath, FilePath), Source, Maybe Hackage)
+source =  do
+  clean
+  maybe (fail "Illegal state: genSources") return =<< genSources
 
 build :: [String] -> Build (Source, Maybe Hackage)
 build opts = do
-  removeBuildDir
-  ((_, dir), src, mayH) <- source'
+  ((_, dir), src, mayH) <- source
   liftTrace $ buildPackage dir All opts
   return (src, mayH)
 
@@ -56,6 +62,8 @@ main =  do
   case as0 of
     "help" : _            ->  help
     as1  ->  run $ case  as1  of
+      "clean" : _         ->  clean
+      "source" : _        ->  void $ source
       "build" : args      ->  void $ build args
       "install" : args    ->  install args
       "reinstall" : args  ->  reinstall args
