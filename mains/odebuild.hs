@@ -60,7 +60,9 @@ main :: IO ()
 main =  do
   as0 <- getArgs
   case as0 of
-    "help" : _            ->  help
+    "-h"     : _          ->  help
+    "--help" : _          ->  help
+    "help"   : _          ->  help
     as1  ->  run $ case  as1  of
       "clean" : _         ->  clean
       "source" : _        ->  void $ source
