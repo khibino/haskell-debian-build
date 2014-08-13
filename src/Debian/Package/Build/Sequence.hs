@@ -198,8 +198,8 @@ cabalGenSources hpkg = do
   copyDebianDir srcDir
   return pair
 
-cabalAutogenDebianDir :: Build FilePath
-cabalAutogenDebianDir = do
+cabalAutogenDebianDir :: Maybe String -> Build FilePath
+cabalAutogenDebianDir mayRev =  do
   baseDir  <-  getBaseDir
   let ddName =  "debian"
       tmpDD  =  baseDir </> ddName
@@ -208,15 +208,15 @@ cabalAutogenDebianDir = do
 
   debDir   <-  (</> ddName) <$> getBuildDir
   liftTrace $ do
-    cabalDebian baseDir Nothing
+    cabalDebian baseDir mayRev
     createDirectoryIfMissing $ takeDirectory debDir
     renameDirectory tmpDD debDir
   return debDir
 
 -- | Setup source directory and archive using Cabal and cabal-debian.
-cabalAutogenSources :: String -> Build ((FilePath, FilePath), HaskellPackage)
-cabalAutogenSources hname = do
-  debDir   <-  cabalAutogenDebianDir
+cabalAutogenSources :: String -> Maybe String -> Build ((FilePath, FilePath), HaskellPackage)
+cabalAutogenSources hname mayRev = do
+  debDir   <-  cabalAutogenDebianDir mayRev
   pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
   hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
@@ -239,8 +239,8 @@ findCabalDescription :: MaybeT Build FilePath
 findCabalDescription =  MaybeT (getBaseDir >>= liftIO . Cabal.findDescriptionFile)
 
 -- | On the fly setup of source directory and archive.
-genSources :: Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))
-genSources =  runMaybeT $
+genSources :: Maybe String -> Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))
+genSources mayRev = runMaybeT $
   do clog <- findDebianChangeLog
      src  <- lift . liftTrace $ dpkgParseChangeLog clog
      (do hname <- takeBaseName <$> findCabalDescription
@@ -252,7 +252,7 @@ genSources =  runMaybeT $
   <|>
   do hname <- takeBaseName <$> findCabalDescription
      lift $ do
-       (p, hpkg) <- cabalAutogenSources hname
+       (p, hpkg) <- cabalAutogenSources hname mayRev
        return (p, package hpkg, Just $ hackage hpkg)
   <|>
   do fail "No source generate rule found."
