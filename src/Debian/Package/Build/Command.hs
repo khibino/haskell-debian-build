@@ -17,7 +17,7 @@ module Debian.Package.Build.Command
 
        , unpackInDir, unpack, packInDir', packInDir
 
-       , cabalDebian', cabalDebian, dpkgParseChangeLog
+       , cabalDebian', cabalDebian, packageVersion, dpkgParseChangeLog
 
        , debuild, debi
 
@@ -40,7 +40,7 @@ import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 
-import Debian.Package.Data (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, Source, parseChangeLog)
+import Debian.Package.Data (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, Source, parseChangeLog, DebianVersion, readDebianVersion)
 import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, bracketTrace_)
 
 
@@ -155,6 +155,13 @@ cabalDebian' mayRev =
 -- | Call /cabal-debian/ command under specified directory
 cabalDebian :: FilePath -> Maybe String -> Trace ()
 cabalDebian dir = withCurrentDir' dir . cabalDebian'
+
+-- | Query debian package version
+packageVersion :: String -> Trace DebianVersion
+packageVersion pkg = do
+  vstr <- readProcess' ["dpkg-query", "--show", "--showformat=${Version}", pkg]
+  maybe (fail $ "readDebianVersion: failed: " ++ vstr) return
+    $ readDebianVersion vstr
 
 -- | Read debian changelog file and try to parse into 'Source'
 dpkgParseChangeLog :: FilePath -> Trace Source

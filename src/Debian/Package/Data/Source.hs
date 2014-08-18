@@ -9,7 +9,7 @@
 --
 -- This module provides data types of debian source package meta information.
 module Debian.Package.Data.Source
-       ( DebianVersion, versionFromHackageVersion
+       ( DebianVersion, versionFromHackageVersion, readDebianVersion
 
        , Source, mkSource, sourceName, version, origVersion, isNative
 
@@ -124,6 +124,9 @@ instance Read DebianVersion where
 readMaybe' :: Read a => String -> Maybe a
 readMaybe' =  fmap fst . listToMaybe . filter ((== "") . snd) . reads
 
+-- | Try to read debian package version
+readDebianVersion :: String -> Maybe DebianVersion
+readDebianVersion =  readMaybe'
 
 -- | Debian source package type, name with version
 data Source = Source String DebianVersion  deriving Show
@@ -179,7 +182,7 @@ parseChangeLog log' = do
     mayDebSrc = lookup' "Source:"
     mayDebVer = do
       dverS <- lookup' "Version:"
-      readMaybe' dverS
+      readDebianVersion dverS
 
 
 -- | Debian source package type for Haskell
