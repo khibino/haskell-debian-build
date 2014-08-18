@@ -9,7 +9,7 @@
 --
 -- This module provides data types of debian source package meta information.
 module Debian.Package.Data.Source
-       ( DebianVersion, versionFromHackageVersion, readDebianVersion
+       ( DebianVersion, versionFromHackageVersion, readDebianVersion, origVersion', isNative'
 
        , Source, mkSource, sourceName, version, origVersion, isNative
 
@@ -77,11 +77,13 @@ versionFromHackageVersion hv = d where
   d Nothing    = debianNativeVersion    [v0, v1, v2, v3] Nothing
   (v0, v1, v2, v3) = hackageVersionNumbers hv
 
+-- | Version without debian revision
 origVersion' :: DebianVersion -> Version
 origVersion' =  d  where
   d (DebianNative    v _) = v
   d (DebianNonNative v _) = v
 
+-- | Is debian-native or not
 isNative' :: DebianVersion -> Bool
 isNative' = d where
   d (DebianNative    _ _) = True

@@ -34,13 +34,15 @@ module Debian.Package.Build.Command
 
 import Data.Maybe (fromMaybe)
 import Control.Arrow ((&&&))
+import Control.Applicative ((<$>))
 import Control.Monad.Trans.Class (lift)
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
+import Data.Version (Version, versionBranch, showVersion)
 
-import Debian.Package.Data (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, Source, parseChangeLog, DebianVersion, readDebianVersion)
+import Debian.Package.Data (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, Source, parseChangeLog, DebianVersion, readDebianVersion, origVersion')
 import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, bracketTrace_)
 
 
@@ -144,13 +146,19 @@ withCurrentDir' dir act = do
 
 -- | Just call /cabal-debian/ command
 cabalDebian' :: Maybe String -> Trace ()
-cabalDebian' mayRev =
+cabalDebian' mayRev = do
+  ver <-  origVersion' <$> packageVersion "cabal-debian"
+  case versionBranch ver of
+    (x:_) | x <= 1     ->  fail $ "Version of cabal-debian is TOO OLD: " ++ showVersion ver ++
+                           " - Under version 1 generates wrong dependencies."
+          | otherwise  ->  return ()
+    []                 ->  return ()
+
   rawSystem'
-  [ "cabal-debian"
-  , "--debianize" {- for cabal-debian 1.25 -}
-  , "--quilt"
-  , "--revision=" ++ fromMaybe "1~autogen1" mayRev
-  ]
+    [ "cabal-debian"
+    , "--quilt"
+    , "--revision=" ++ fromMaybe "1~autogen1" mayRev
+    ]
 
 -- | Call /cabal-debian/ command under specified directory
 cabalDebian :: FilePath -> Maybe String -> Trace ()
