@@ -1,8 +1,9 @@
 name:                debian-build
 version:             0.2.1.0
 synopsis:            Debian package build sequence tools
-description:         This package provides functions to build
-                     debian package from source tree.
+description:         This package provides build sequence functions
+                     for debian package, and includes on-the-fly
+                     build command 'odebuild'.
 homepage:            http://twitter.com/khibino/
 license:             BSD3
 license-file:        LICENSE
