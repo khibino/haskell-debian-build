@@ -9,7 +9,7 @@
 --
 -- This module provides monad types to control build scripts.
 module Debian.Package.Build.Monad
-       ( Trace, runTrace, traceCommand, traceOut
+       ( Trace, runTrace, traceCommand, traceOut, putLog
        , bracketTrace, bracketTrace_
 
        , BaseDir, baseDirCurrent, baseDirSpecify
@@ -25,7 +25,7 @@ module Debian.Package.Build.Monad
        ) where
 
 import System.FilePath ((</>))
-import System.IO (hPutStrLn, hFlush, stderr)
+import System.IO (hPutStrLn, hFlush, stderr, stdout)
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad (when)
@@ -90,6 +90,12 @@ traceCommand =  traceIO . tprint '+'
 traceOut :: String -> Trace ()
 traceOut =  traceIO . tprint '>'
 
+-- | Put log stinrg with flush.
+putLog :: String -> Trace ()
+putLog s = traceIO $ do
+  let fh = stdout
+  hPutStrLn fh s
+  hFlush fh
 
 -- | Type to specify base directory filepath
 newtype BaseDir = BaseDir { unBaseDir :: Maybe FilePath }

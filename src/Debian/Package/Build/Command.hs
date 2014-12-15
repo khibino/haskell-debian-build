@@ -43,7 +43,7 @@ import System.Exit (ExitCode (..))
 import Data.Version (Version, versionBranch, showVersion)
 
 import Debian.Package.Data (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, Source, parseChangeLog, DebianVersion, readDebianVersion, origVersion')
-import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, bracketTrace_)
+import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, putLog, bracketTrace_)
 
 
 splitCommand :: [a] -> (a, [a])
@@ -116,7 +116,7 @@ confirmPath path =
 -- | Unpack .tar.gz under directory.
 unpackInDir :: FilePath -> FilePath -> Trace ()
 apath `unpackInDir` dir = do
-  lift . putStrLn $ unwords ["Unpacking", apath, "in", dir, "."]
+  putLog $ unwords ["Unpacking", apath, "in", dir, "."]
   rawSystem' ["tar", "-C", dir, "-zxf", apath]
 
 -- | Unpack .tar.gz under archive place.
@@ -126,7 +126,7 @@ unpack apath = apath `unpackInDir` takeDirectory apath
 -- | Pack directory into .tar.gz under working directory
 packInDir' :: FilePath -> FilePath -> FilePath -> Trace ()
 packInDir' pdir apath wdir = do
-  lift . putStrLn $ unwords ["Packing", pdir, "in", wdir, "into", apath, "."]
+  putLog $ unwords ["Packing", pdir, "in", wdir, "into", apath, "."]
   rawSystem' ["tar", "-C", wdir, "-zcf", apath, pdir]
 
 -- | Pack directory into same location .tar.gz under working directory
