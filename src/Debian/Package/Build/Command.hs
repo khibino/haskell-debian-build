@@ -214,4 +214,4 @@ removeGhcLibrary :: BuildMode -> Hackage -> Trace ()
 removeGhcLibrary mode hkg = do
   let pkgs All = ghcLibraryBinPackages
       pkgs Bin = ghcLibraryPackages
-  system' $ unwords ["yes '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
+  system' $ unwords ["echo '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
