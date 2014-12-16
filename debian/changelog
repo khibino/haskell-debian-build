@@ -1,3 +1,9 @@
+haskell-debian-build (0.3.0.0-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Kei Hibino <ex8k.hibino@gmail.com>  Tue, 16 Dec 2014 13:39:30 +0900
+
 haskell-debian-build (0.2.2.0-1) unstable; urgency=medium
 
   * New upstream release.
