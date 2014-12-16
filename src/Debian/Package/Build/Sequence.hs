@@ -118,10 +118,11 @@ rsyncGenOrigSourceDir pkg = do
   debDN    <- debianDirName
   baseDir  <- getBaseDir
   bldDir   <- getBuildDir
+  confEXs  <- sourceExcludes <$> askConfig
   let excludes = [takeFileName d
                  | d <- [bldDir]
                  , baseDir `isPrefixOf` d ]
-                 ++ [debDN]
+                 ++ [debDN] ++ confEXs
   liftTrace $ do
     createDirectoryIfMissing srcDir
     rawSystem'
