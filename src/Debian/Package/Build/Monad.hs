@@ -18,7 +18,7 @@ module Debian.Package.Build.Monad
 
        , BuildDir, buildDirRelative, buildDirAbsolute
 
-       , Config, defaultConfig, buildDir, mayDebianDirName, sourceExcludes
+       , Config, defaultConfig, buildDir, debianDirName, sourceExcludes
 
        , Build, liftTrace, runBuild, askConfig
        , bracketBuild, bracketBuild_
@@ -132,14 +132,14 @@ instance Show BuildDir where
 -- | Build configuration type
 data Config =
   Config
-  { buildDir         :: BuildDir        -- ^ Specify build dir
-  , mayDebianDirName :: Maybe FilePath  -- ^ Name of debian directory
-  , sourceExcludes   :: [FilePath]      -- ^ Exclude directories to setup source directory
+  { buildDir        :: BuildDir   -- ^ Specify build dir
+  , debianDirName   :: FilePath   -- ^ Name of debian directory
+  , sourceExcludes  :: [FilePath] -- ^ Exclude directories to setup source directory
   } deriving Show
 
 -- | Default configuration
 defaultConfig :: (Config, Bool)
-defaultConfig =  (Config (buildDirRelative ".debian-build") Nothing [".git", ".hg"], True)
+defaultConfig =  (Config (buildDirRelative ".debian-build") "debian" [".git", ".hg"], True)
 
 -- | Monad type with build base directory and build configuration.
 type Build = ReaderT BaseDir (ReaderT Config Trace)

@@ -32,7 +32,6 @@ import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
-import Data.Maybe (fromMaybe)
 import Data.List (isPrefixOf)
 
 import Debian.Package.Data
@@ -83,10 +82,8 @@ removeBuildDir = do
     when found $ rawSystem' ["rm", "-r", bldDir]
 
 -- | Take debian-directory name from 'Build' action context.
-debianDirName :: Build FilePath
-debianDirName =  do
-  mayD <- mayDebianDirName <$> askConfig
-  return $ fromMaybe "debian" mayD
+debianDirName' :: Build FilePath
+debianDirName' =  debianDirName <$> askConfig
 
 -- | Take original source archive name from 'Build' action context.
 origArchive :: Source -> Build FilePath
@@ -106,7 +103,7 @@ sourceDir pkg =
 -- | Action to copy debian directory from base-directory into specified directory.
 copyDebianDir :: FilePath -> Build ()
 copyDebianDir srcDir = do
-  debDN       <- debianDirName
+  debDN       <- debianDirName'
   baseDir     <- getBaseDir
   liftTrace $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
 
@@ -115,7 +112,7 @@ copyDebianDir srcDir = do
 rsyncGenOrigSourceDir :: Source -> Build FilePath
 rsyncGenOrigSourceDir pkg = do
   srcDir   <- sourceDir pkg
-  debDN    <- debianDirName
+  debDN    <- debianDirName'
   baseDir  <- getBaseDir
   bldDir   <- getBuildDir
   confEXs  <- sourceExcludes <$> askConfig
@@ -228,7 +225,7 @@ cabalAutogenSources hname mayRev = do
 findDebianChangeLog :: MaybeT Build FilePath
 findDebianChangeLog =  MaybeT $ do
   baseDir  <-  getBaseDir
-  debDN    <-  debianDirName
+  debDN    <-  debianDirName'
   let changelog = baseDir </> debDN </> "changelog"
   liftIO $ do
     exist <- doesFileExist changelog
