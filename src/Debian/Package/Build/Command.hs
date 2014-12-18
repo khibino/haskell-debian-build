@@ -42,7 +42,9 @@ import qualified System.Process as Process
 import System.Exit (ExitCode (..))
 import Data.Version (Version, versionBranch, showVersion)
 
-import Debian.Package.Data (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, Source, parseChangeLog, DebianVersion, readDebianVersion, origVersion')
+import Debian.Package.Data
+  (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, ghcLibraryDocPackage,
+   Source, parseChangeLog, DebianVersion, readDebianVersion, origVersion')
 import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, putLog, bracketTrace_)
 
 
@@ -194,13 +196,16 @@ debi :: FilePath -> [String] -> Trace ()
 debi dir = withCurrentDir' dir . rawSystem' . (["sudo", "debi"] ++)
 
 -- | Build mode, all or binary only
-data BuildMode = All | Bin
+data BuildMode = All | Bin | Src | Dep | Indep
 
 -- | Build package using /debuild/ under specified directory
 buildPackage :: FilePath -> BuildMode -> [String] -> Trace ()
 buildPackage dir mode opts = do
-  let modeOpt All = []
-      modeOpt Bin = ["-B"]
+  let modeOpt All    =  []
+      modeOpt Bin    =  ["-b"]
+      modeOpt Src    =  ["-S"]
+      modeOpt Dep    =  ["-B"]
+      modeOpt Indep  =  ["-A"]
   debuild dir $ ["-uc", "-us"] ++ modeOpt mode ++ opts
 
 -- | Clean and build package using /debuild/ under specified directory
@@ -212,6 +217,9 @@ rebuild dir mode opts = do
 -- | Remove ghc library packages under specified source package directory
 removeGhcLibrary :: BuildMode -> Hackage -> Trace ()
 removeGhcLibrary mode hkg = do
-  let pkgs All = ghcLibraryBinPackages
-      pkgs Bin = ghcLibraryPackages
+  let pkgs All   =  ghcLibraryPackages
+      pkgs Bin   =  ghcLibraryPackages
+      pkgs Src   =  const []
+      pkgs Dep   =  ghcLibraryBinPackages
+      pkgs Indep =  (:[]) . ghcLibraryDocPackage
   system' $ unwords ["echo '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
