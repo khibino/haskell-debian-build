@@ -31,7 +31,7 @@ import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
 import System.FilePath ((<.>))
 
 import Debian.Package.Data.Hackage
-  (HackageVersion, mkHackageVersion, hackageVersionNumbers,
+  (HackageVersion, mkHackageVersion', hackageVersionNumbers,
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
 
 
@@ -73,9 +73,9 @@ debianNonNativeVersion v = DebianNonNative (Version v [])
 -- | Make deebian version from hackage version
 versionFromHackageVersion :: HackageVersion -> Maybe String -> DebianVersion
 versionFromHackageVersion hv = d where
-  d (Just rev) = debianNonNativeVersion [v0, v1, v2, v3] rev
-  d Nothing    = debianNativeVersion    [v0, v1, v2, v3] Nothing
-  (v0, v1, v2, v3) = hackageVersionNumbers hv
+  d (Just rev) = debianNonNativeVersion ns rev
+  d Nothing    = debianNativeVersion    ns Nothing
+  ns = hackageVersionNumbers hv
 
 -- | Version without debian revision
 origVersion' :: DebianVersion -> Version
@@ -167,9 +167,7 @@ sourceDirName pkg = sourceName pkg ++ '-' : showVersion (origVersion pkg)
 
 -- | Try to make 'HackageVersion' from 'Source'
 deriveHackageVersion :: Source -> Maybe HackageVersion
-deriveHackageVersion =  d . versionBranch . origVersion where
-  d [v0, v1, v2, v3] = Just $ mkHackageVersion v0 v1 v2 v3
-  d _                = Nothing
+deriveHackageVersion =  Just . mkHackageVersion' . versionBranch . origVersion where
 
 -- | Try to generate 'Source' from debian changelog string
 parseChangeLog :: String       -- ^ dpkg-parsechangelog result string
