@@ -35,6 +35,7 @@ module Debian.Package.Build.Command
 import Data.Maybe (fromMaybe)
 import Control.Arrow ((&&&))
 import Control.Applicative ((<$>))
+import Control.Monad (unless)
 import Control.Monad.Trans.Class (lift)
 import System.FilePath ((<.>), takeDirectory)
 import qualified System.Directory as D
@@ -222,4 +223,6 @@ removeGhcLibrary mode hkg = do
       pkgs Src   =  const []
       pkgs Dep   =  ghcLibraryBinPackages
       pkgs Indep =  (:[]) . ghcLibraryDocPackage
-  system' $ unwords ["echo '' |", "sudo apt-get remove", unwords $ pkgs mode hkg, "|| true"]
+      pkgs' = pkgs mode hkg
+  unless (null pkgs') . system'
+    $ unwords ["echo '' |", "sudo apt-get remove", unwords pkgs', "|| true"]
