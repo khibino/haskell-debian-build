@@ -216,7 +216,7 @@ cabalAutogenSources :: String -> Maybe String -> Build ((FilePath, FilePath), Ha
 cabalAutogenSources hname mayRev = do
   debDir   <-  cabalAutogenDebianDir mayRev
   pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
-  hpkg     <-  either fail return $ haskellPackageFromPackage hname pkg
+  let hpkg =   haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
   liftTrace $ renameDirectory debDir (srcDir </> takeFileName debDir)
   return (pair, hpkg)
@@ -242,7 +242,7 @@ genSources mayRev = runMaybeT $
   do clog <- findDebianChangeLog
      src  <- lift . liftTrace $ dpkgParseChangeLog clog
      (do hname <- takeBaseName <$> findCabalDescription
-         hpkg  <- either fail return $ haskellPackageFromPackage hname src
+         let hpkg = haskellPackageFromPackage hname src
          p <- lift $ cabalGenSources hpkg
          return (p, src, Just $ hackage hpkg)
       <|>
