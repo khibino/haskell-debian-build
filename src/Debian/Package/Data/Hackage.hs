@@ -9,7 +9,7 @@
 --
 -- This module provides data types of hackage meta information.
 module Debian.Package.Data.Hackage
-       ( HackageVersion, mkHackageVersion, hackageVersionNumbers
+       ( HackageVersion, mkHackageVersion, mkHackageVersion', hackageVersionNumbers
 
        , Hackage, mkHackage, hackageName, hackageVersion
        , debianShortName, mkHackageDefault
@@ -34,14 +34,16 @@ import System.FilePath ((</>), (<.>))
 newtype HackageVersion = HackageVersion (Version)
 
 -- | Make 'HackageVersion'
+mkHackageVersion' :: [Int] -> HackageVersion
+mkHackageVersion' =  HackageVersion . (`Version` [])
+
+-- | Make 'HackageVersion'
 mkHackageVersion :: Int -> Int -> Int -> Int -> HackageVersion
-mkHackageVersion v0 v1 v2 v3 = HackageVersion $ Version [v0, v1, v2, v3] []
+mkHackageVersion v0 v1 v2 v3 = mkHackageVersion' [v0, v1, v2, v3]
 
 -- | Extract hackage version numbers.
-hackageVersionNumbers :: HackageVersion -> (Int, Int, Int, Int)
-hackageVersionNumbers = d  where
-  d (HackageVersion (Version [v0, v1, v2, v3] [])) = (v0, v1, v2, v3)
-  d hv                                             = error $ "HackageVersion: Invalid structure: " ++ show hv
+hackageVersionNumbers :: HackageVersion -> [Int]
+hackageVersionNumbers (HackageVersion (Version ns _)) = ns
 
 instance Show HackageVersion where
   show (HackageVersion v) = showVersion v
