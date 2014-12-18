@@ -4,13 +4,16 @@ import Data.List (stripPrefix)
 
 import Debian.Package.Data (Source, Hackage)
 import Debian.Package.Build
-  (BuildMode (All), buildPackage, debi,
+  (BuildMode (Bin, Src), buildPackage, debi,
    baseDirCurrent, defaultConfig, Build, runBuild, liftTrace,
    sourceDir, removeBuildDir, genSources, removeGhcLibrary)
 
 
+defualtModes :: [BuildMode]
+defualtModes =  [Bin, Src]
+
 remove' :: Hackage -> Build ()
-remove' =  liftTrace . removeGhcLibrary All
+remove' hkg = liftTrace $ sequence_ [removeGhcLibrary m hkg | m <- defualtModes]
 
 install' :: Source -> Build ()
 install' src = do
@@ -43,7 +46,7 @@ source mayRev = do
 build :: Maybe String -> [String] -> Build (Source, Maybe Hackage)
 build mayRev opts = do
   ((_, dir), src, mayH) <- source mayRev
-  liftTrace $ buildPackage dir All opts
+  liftTrace $ sequence_ [buildPackage dir m opts | m <- defualtModes]
   return (src, mayH)
 
 install :: Maybe String -> [String] -> Build ()
