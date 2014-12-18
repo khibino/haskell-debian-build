@@ -166,8 +166,8 @@ sourceDirName :: Source -> FilePath
 sourceDirName pkg = sourceName pkg ++ '-' : showVersion (origVersion pkg)
 
 -- | Try to make 'HackageVersion' from 'Source'
-deriveHackageVersion :: Source -> Maybe HackageVersion
-deriveHackageVersion =  Just . mkHackageVersion' . versionBranch . origVersion where
+deriveHackageVersion :: Source -> HackageVersion
+deriveHackageVersion =  mkHackageVersion' . versionBranch . origVersion where
 
 -- | Try to generate 'Source' from debian changelog string
 parseChangeLog :: String       -- ^ dpkg-parsechangelog result string
@@ -215,7 +215,6 @@ haskellPackageFromPackage :: String                       -- ^ Hackage name stri
                           -> Source                       -- ^ Debian package meta info
                           -> Either String HaskellPackage -- ^ Result
 haskellPackageFromPackage hname pkg = do
-  hv <- maybe (Left "Fail to derive hackage version") Right
-        $ deriveHackageVersion pkg
-  let hkg = mkHackageDefault Simple hname hv
+  let hv  = deriveHackageVersion pkg
+      hkg = mkHackageDefault Simple hname hv
   return $ HaskellPackage hkg pkg
