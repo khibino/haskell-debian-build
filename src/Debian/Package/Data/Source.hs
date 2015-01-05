@@ -23,7 +23,9 @@ module Debian.Package.Data.Source
 
 import Data.Maybe (listToMaybe)
 import Control.Arrow (second)
-import Control.Monad (ap, MonadPlus, mplus)
+import Control.Applicative ((<$>), pure, (<*>), (<|>))
+import Control.Monad.Trans.State (StateT, runStateT)
+import Control.Monad.Trans.Class (lift)
 import Numeric (readDec)
 import Data.Char (isSpace)
 import Data.Version (Version (Version, versionBranch), showVersion, parseVersion)
@@ -35,28 +37,12 @@ import Debian.Package.Data.Hackage
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
 
 
--- Combinators like Applicative -- for base-4.5.0.0 - debian wheezy
+-- For base-4.5.0.0 - debian wheezy, portability trick.
+-- Monad m ==> Applicative (StateT s m)
+type Parser = StateT () ReadP
 
-(<$>) :: Functor m => (a -> b) -> m a -> m b
-(<$>) =  fmap
-
-pure :: Monad m => a -> m a
-pure =  return
-
-(<*>) :: Monad m => m (a -> b) -> m a -> m b
-(<*>) =  ap
-
-(*>) :: Monad m => m a -> m b -> m b
-(*>) =  (>>)
-
---  (<*) :: (Functor m, Monad m) => m a -> m b -> m a
---  fa <* fb = const <$> fa <*> fb
-
-(<|>) :: MonadPlus m => m a -> m a -> m a
-(<|>) =  mplus
-
-infixl 3 <|>
-infixl 4 <$>, <*>, *>
+runParser :: Parser a -> String -> [(a, String)]
+runParser p in0 = [ (x, in1) | ((x, ()), in1) <- readP_to_S (runStateT p ()) in0 ]
 
 
 -- | Version type for Debian
@@ -92,23 +78,23 @@ isNative' = d where
 lexWord :: String -> [(String, String)]
 lexWord =  (:[]) . break isSpace . dropWhile isSpace
 
-returnParsed :: ReadP a -> String -> ReadP a
-returnParsed p s = case [ x | (x, "") <- readP_to_S p s ] of
+returnParsed :: Parser a -> String -> Parser a
+returnParsed p s = case [ x | (x, "") <- runParser p s ] of
   [x] -> return x
   []  -> fail "ReadP: no parse"
   _   -> fail "ReadP: ambiguous parse"
 
-returnParsedVersion :: String -> ReadP Version
-returnParsedVersion =  returnParsed parseVersion
+returnParsedVersion :: String -> Parser Version
+returnParsedVersion =  returnParsed $ lift parseVersion
 
-returnParsedNMU :: String -> ReadP (Maybe Int)
+returnParsedNMU :: String -> Parser (Maybe Int)
 returnParsedNMU = returnParsed $
-                  Just <$> (string "+nmu" *> readS_to_P readDec)  <|>
+                  Just <$> lift (string "+nmu" >> readS_to_P readDec) <|>
                   pure Nothing
 
-parseDebianVersion :: ReadP DebianVersion
+parseDebianVersion :: Parser DebianVersion
 parseDebianVersion =  do
-  vs0 <- readS_to_P lexWord
+  vs0 <- lift $ readS_to_P lexWord
   let (vs1, rtag) = break (== '-') vs0
       (vs2, nmu)  = break (== '+') vs1
   if rtag == ""
@@ -121,7 +107,7 @@ instance Show DebianVersion where
     d (DebianNonNative v r)  = showVersion v ++ '-': r
 
 instance Read DebianVersion where
-  readsPrec _ = readP_to_S parseDebianVersion
+  readsPrec _ = runParser parseDebianVersion
 
 readMaybe' :: Read a => String -> Maybe a
 readMaybe' =  fmap fst . listToMaybe . filter ((== "") . snd) . reads
