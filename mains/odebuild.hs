@@ -1,24 +1,27 @@
 import System.Environment (getProgName, getArgs)
-import Control.Monad (void)
+import Control.Monad (void, when)
 import Data.List (stripPrefix)
 
-import Debian.Package.Data (Source, Hackage)
+import Debian.Package.Data (Source, Hackage, isBinaryChanges)
 import Debian.Package.Build
-  (BuildMode (Bin, Src), buildPackage, debi,
+  (BuildMode (Dep, Indep, Src), buildPackage, debi',
    baseDirCurrent, defaultConfig, Build, runBuild, liftTrace,
-   sourceDir, removeBuildDir, genSources, removeGhcLibrary)
+   removeBuildDir, findDebianChanges, genSources, removeGhcLibrary)
 
 
 defualtModes :: [BuildMode]
-defualtModes =  [Bin, Src]
+defualtModes =  [Dep, Indep, Src]
 
 remove' :: Hackage -> Build ()
 remove' hkg = liftTrace $ sequence_ [removeGhcLibrary m hkg | m <- defualtModes]
 
-install' :: Source -> Build ()
-install' src = do
-  srcDir <- sourceDir src
-  liftTrace $ debi srcDir []
+install' :: Build ()
+install' =  do
+  ps <- findDebianChanges
+  let cs = [c | (c, t) <- ps, isBinaryChanges t ]
+  liftTrace $ do
+    when (null cs) $ fail "No .changes files found!"
+    mapM_ (\c -> debi' [c]) cs
 
 
 help :: IO ()
@@ -51,14 +54,14 @@ build mayRev opts = do
 
 install :: Maybe String -> [String] -> Build ()
 install mayRev args = do
-  (src, _mayH) <- build mayRev args
-  install' src
+  void $ build mayRev args
+  install'
 
 reinstall :: Maybe String -> [String] -> Build ()
 reinstall mayRev args = do
-  (src, mayH) <- build mayRev args
+  (_src, mayH) <- build mayRev args
   maybe (return ()) remove' mayH
-  install' src
+  install'
 
 run :: Build a -> IO a
 run b = uncurry (runBuild b baseDirCurrent) defaultConfig
