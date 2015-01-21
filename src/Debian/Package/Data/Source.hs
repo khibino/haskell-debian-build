@@ -17,20 +17,23 @@ module Debian.Package.Data.Source
 
        , parseChangeLog
 
+       , ChangesType (..), takeChangesType
+
        , HaskellPackage, hackage, package
        , haskellPackageDefault, haskellPackageFromPackage
        ) where
 
-import Data.Maybe (listToMaybe)
 import Control.Arrow (second)
 import Control.Applicative ((<$>), pure, (<*>), (<|>))
 import Control.Monad.Trans.State (StateT, runStateT)
 import Control.Monad.Trans.Class (lift)
 import Numeric (readDec)
+import Data.Maybe (listToMaybe)
 import Data.Char (isSpace)
 import Data.Version (Version (Version, versionBranch), showVersion, parseVersion)
+import Data.List.Split (splitOn)
 import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
-import System.FilePath ((<.>))
+import System.FilePath ((<.>), takeFileName, splitExtension)
 
 import Debian.Package.Data.Hackage
   (HackageVersion, mkHackageVersion', hackageVersionNumbers,
@@ -169,6 +172,25 @@ parseChangeLog log' = do
     mayDebVer = do
       dverS <- lookup' "Version:"
       readDebianVersion dverS
+
+-- | Debian .changes file types
+data ChangesType
+  = ChangesArch String
+  | ChangesAll
+  | ChangesSource
+  deriving (Eq, Show)
+
+-- | Take 'ChangesType' from debian .changes file path
+takeChangesType :: FilePath -> Maybe ChangesType
+takeChangesType path = d . splitExtension $ takeFileName path  where
+  d (n, ".changes") = case xs of
+    [_, _, a] -> case a of
+      "all"    -> Just   ChangesAll
+      "source" -> Just   ChangesSource
+      _        -> Just $ ChangesArch a
+    _          -> Nothing
+    where xs = splitOn "_" n
+  d (_, _)     =  Nothing
 
 
 -- | Debian source package type for Haskell

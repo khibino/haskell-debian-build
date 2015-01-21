@@ -14,6 +14,7 @@ module Debian.Package.Build.Sequence
        , withCurrentDir, withBaseCurrentDir
 
        , removeBuildDir
+       , findDebianChanges
 
        , copyDebianDir
 
@@ -26,17 +27,19 @@ module Debian.Package.Build.Sequence
 
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
 import System.Directory
-  (doesDirectoryExist, doesFileExist)
+  (getDirectoryContents, doesDirectoryExist, doesFileExist)
 import Control.Applicative (pure, (<$>), (<*>), (<|>))
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
 import Data.List (isPrefixOf)
+import Data.Maybe (catMaybes)
 
 import Debian.Package.Data
   (Hackage, hackageLongName, hackageArchive,
    Source, origArchiveName, nativeArchiveName, sourceDirName, isNative,
+   ChangesType, takeChangesType,
    HaskellPackage, hackage, package, haskellPackageFromPackage)
 import Debian.Package.Build.Monad
   (Build, liftTrace, bracketBuild_, Config (..), askConfig, askBaseDir, askBuildDir)
@@ -232,6 +235,17 @@ findDebianChangeLog =  MaybeT $ do
     return $ if exist
              then Just changelog
              else Nothing
+
+-- | Find debian .changes files
+findDebianChanges :: Build [(FilePath, ChangesType)]
+findDebianChanges =  do
+  bd <- getBuildDir
+  fs <- liftIO $ getDirectoryContents bd
+  return $ catMaybes
+    [ do ty <- takeChangesType path
+         Just (path, ty)
+    | path <- map (bd </>) fs
+    ]
 
 findCabalDescription :: MaybeT Build FilePath
 findCabalDescription =  MaybeT (getBaseDir >>= liftIO . Cabal.findDescriptionFile)
