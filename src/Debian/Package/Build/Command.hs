@@ -19,7 +19,7 @@ module Debian.Package.Build.Command
 
        , cabalDebian', cabalDebian, packageVersion, dpkgParseChangeLog
 
-       , debuild, debi
+       , debuild, debi', debi
 
        , BuildMode (..)
 
@@ -192,9 +192,13 @@ debuild' =  run "debuild"
 debuild :: FilePath -> [String] -> Trace ()
 debuild dir = withCurrentDir' dir . debuild'
 
+-- | Just run debi with root user
+debi' :: [String] -> Trace ()
+debi' =  rawSystem' . (["sudo", "debi"] ++)
+
 -- | Install packages under specified source package directory
 debi :: FilePath -> [String] -> Trace ()
-debi dir = withCurrentDir' dir . rawSystem' . (["sudo", "debi"] ++)
+debi dir = withCurrentDir' dir . debi'
 
 -- | Build mode, all or binary only
 data BuildMode = All | Bin | Src | Dep | Indep
