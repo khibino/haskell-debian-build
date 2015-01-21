@@ -26,6 +26,7 @@ Recommends: ${haskell:Recommends}
          , dpkg-dev
          , devscripts
          , apt
+	 , sudo
 Suggests: ${haskell:Suggests}
 Conflicts: ${haskell:Conflicts}
 Provides: ${haskell:Provides}
@@ -96,6 +97,7 @@ Depends: ${shlibs:Depends}
          , dpkg-dev
          , devscripts
          , apt
+	 , sudo
 Recommends: ${haskell:Recommends}
 Suggests: ${haskell:Suggests}
 Conflicts: ${haskell:Conflicts}
