@@ -13,7 +13,7 @@ module Debian.Package.Build.Sequence
 
        , withCurrentDir, withBaseCurrentDir
 
-       , removeBuildDir
+       , getBuildDir, removeBuildDir
        , findDebianChanges
 
        , copyDebianDir
@@ -68,7 +68,7 @@ withBaseCurrentDir act = do
   baseDir <- getBaseDir
   withCurrentDir baseDir act
 
--- Take build-directory from 'Build' action context.
+-- | Take build-directory from 'Build' action context.
 getBuildDir :: Build FilePath
 getBuildDir =  liftIO pwd >>= askBuildDir
 
