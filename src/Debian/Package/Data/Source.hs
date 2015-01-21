@@ -17,7 +17,7 @@ module Debian.Package.Data.Source
 
        , parseChangeLog
 
-       , ChangesType (..), takeChangesType
+       , ChangesType (..), takeChangesType, isSourceChanges, isBinaryChanges
 
        , HaskellPackage, hackage, package
        , haskellPackageDefault, haskellPackageFromPackage
@@ -191,6 +191,17 @@ takeChangesType path = d . splitExtension $ takeFileName path  where
     _          -> Nothing
     where xs = splitOn "_" n
   d (_, _)     =  Nothing
+
+-- | Test changes file type is source package.
+isSourceChanges :: ChangesType -> Bool
+isSourceChanges = d where
+  d (ChangesArch _) = False
+  d  ChangesAll     = False
+  d  ChangesSource  = True
+
+-- | Test changes file type is binary package.
+isBinaryChanges :: ChangesType -> Bool
+isBinaryChanges = not . isSourceChanges
 
 
 -- | Debian source package type for Haskell
