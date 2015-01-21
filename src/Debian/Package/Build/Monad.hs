@@ -139,7 +139,12 @@ data Config =
 
 -- | Default configuration
 defaultConfig :: (Config, Bool)
-defaultConfig =  (Config (buildDirRelative ".debian-build") "debian" [".git", ".hg"], True)
+defaultConfig =  (Config
+                  { buildDir       = buildDirRelative ".debian-build"
+                  , debianDirName  = "debian"
+                  , sourceExcludes = [".git", ".hg"]
+                  },
+                  True)
 
 -- | Monad type with build base directory and build configuration.
 type Build = ReaderT BaseDir (ReaderT Config Trace)
