@@ -12,7 +12,7 @@ module Debian.Package.Build.Monad
        ( Trace, runTrace, traceCommand, traceOut, putLog
        , bracketTrace, bracketTrace_
 
-       , BaseDir, baseDirCurrent, baseDirSpecify
+       , BaseDir, baseDirSpecify
 
        , askBaseDir, askBuildDir
 
@@ -26,7 +26,6 @@ module Debian.Package.Build.Monad
 
 import System.FilePath ((</>))
 import System.IO (hPutStrLn, hFlush, stderr, stdout)
-import Data.Maybe (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
@@ -98,15 +97,11 @@ putLog s = traceIO $ do
   hFlush fh
 
 -- | Type to specify base directory filepath
-newtype BaseDir = BaseDir { unBaseDir :: Maybe FilePath }
-
--- | Use current directory as base directory
-baseDirCurrent :: BaseDir
-baseDirCurrent =  BaseDir Nothing
+type BaseDir = FilePath
 
 -- | Use specified directory as base directory
 baseDirSpecify :: FilePath -> BaseDir
-baseDirSpecify =  BaseDir . Just
+baseDirSpecify =  id
 
 -- | Type to specify build working directory
 newtype BuildDir = BuildDir (Either FilePath FilePath)
@@ -166,15 +161,15 @@ bracketBuild_ :: Build a -> Build b -> Build c -> Build c
 bracketBuild_ =  toBracket_ bracketBuild
 
 -- | Get base directory in 'Build' monad
-askBaseDir :: FilePath -> Build FilePath
-askBaseDir cur = fromMaybe cur . unBaseDir <$> ask
+askBaseDir :: Build FilePath
+askBaseDir =  ask
 
 -- | Get build configuration in 'Build' monad
 askConfig :: Build Config
 askConfig =  lift ask
 
 -- | Get build working directory in 'Build' monad
-askBuildDir :: FilePath -> Build FilePath
-askBuildDir cur = do
+askBuildDir :: Build FilePath
+askBuildDir =  do
   bd <- buildDir <$> askConfig
-  (`unBuildDir` bd) <$> askBaseDir cur
+  (`unBuildDir` bd) <$> askBaseDir

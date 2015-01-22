@@ -60,7 +60,7 @@ withCurrentDir dir act = do
 
 -- Take base-directory from 'Build' action context.
 getBaseDir :: Build FilePath
-getBaseDir =  liftIO pwd >>= askBaseDir
+getBaseDir =  askBaseDir
 
 -- | Run 'Build' action under base-directory.
 withBaseCurrentDir :: Build a -> Build a
@@ -70,7 +70,7 @@ withBaseCurrentDir act = do
 
 -- | Take build-directory from 'Build' action context.
 getBuildDir :: Build FilePath
-getBuildDir =  liftIO pwd >>= askBuildDir
+getBuildDir =  askBuildDir
 
 -- Pass build-directory to 'Build' action.
 withBuildDir :: (FilePath -> Build a) -> Build a
