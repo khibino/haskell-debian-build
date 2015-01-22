@@ -58,14 +58,10 @@ withCurrentDir dir act = do
     (liftTrace $ chdir saveDir)
     act
 
--- Take base-directory from 'Build' action context.
-getBaseDir :: Build FilePath
-getBaseDir =  askBaseDir
-
 -- | Run 'Build' action under base-directory.
 withBaseCurrentDir :: Build a -> Build a
 withBaseCurrentDir act = do
-  baseDir <- getBaseDir
+  baseDir <- askBaseDir
   withCurrentDir baseDir act
 
 -- | Take build-directory from 'Build' action context.
@@ -107,7 +103,7 @@ sourceDir pkg =
 copyDebianDir :: FilePath -> Build ()
 copyDebianDir srcDir = do
   debDN       <- debianDirName'
-  baseDir     <- getBaseDir
+  baseDir     <- askBaseDir
   liftTrace $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
 
 
@@ -116,7 +112,7 @@ rsyncGenOrigSourceDir :: Source -> Build FilePath
 rsyncGenOrigSourceDir pkg = do
   srcDir   <- sourceDir pkg
   debDN    <- debianDirName'
-  baseDir  <- getBaseDir
+  baseDir  <- askBaseDir
   bldDir   <- getBuildDir
   confEXs  <- sourceExcludes <$> askConfig
   let excludes = [takeFileName d
@@ -164,7 +160,7 @@ rsyncGenSources pkg
 cabalGenArchive :: Hackage -> Build FilePath
 cabalGenArchive hkg = do
   withBaseCurrentDir . liftTrace $ Cabal.sdist []
-  baseDir <- getBaseDir
+  baseDir <- askBaseDir
   let apath = baseDir </> hackageArchive hkg
   liftTrace $ confirmPath apath
   return apath
@@ -201,7 +197,7 @@ cabalGenSources hpkg = do
 
 cabalAutogenDebianDir :: Maybe String -> Build FilePath
 cabalAutogenDebianDir mayRev =  do
-  baseDir  <-  getBaseDir
+  baseDir  <-  askBaseDir
   let ddName =  "debian"
       tmpDD  =  baseDir </> ddName
   exist <- liftIO $ doesDirectoryExist tmpDD
@@ -227,7 +223,7 @@ cabalAutogenSources hname mayRev = do
 
 findDebianChangeLog :: MaybeT Build FilePath
 findDebianChangeLog =  MaybeT $ do
-  baseDir  <-  getBaseDir
+  baseDir  <-  askBaseDir
   debDN    <-  debianDirName'
   let changelog = baseDir </> debDN </> "changelog"
   liftIO $ do
@@ -248,7 +244,7 @@ findDebianChanges =  do
     ]
 
 findCabalDescription :: MaybeT Build FilePath
-findCabalDescription =  MaybeT (getBaseDir >>= liftIO . Cabal.findDescriptionFile)
+findCabalDescription =  MaybeT (askBaseDir >>= liftIO . Cabal.findDescriptionFile)
 
 -- | On the fly setup of source directory and archive.
 genSources :: Maybe String -> Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))

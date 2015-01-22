@@ -12,7 +12,7 @@ module Debian.Package.Build.Monad
        ( Trace, runTrace, traceCommand, traceOut, putLog
        , bracketTrace, bracketTrace_
 
-       , BaseDir, baseDirSpecify
+       , BaseDir
 
        , askBaseDir, askBuildDir
 
@@ -98,10 +98,6 @@ putLog s = traceIO $ do
 
 -- | Type to specify base directory filepath
 type BaseDir = FilePath
-
--- | Use specified directory as base directory
-baseDirSpecify :: FilePath -> BaseDir
-baseDirSpecify =  id
 
 -- | Type to specify build working directory
 newtype BuildDir = BuildDir (Either FilePath FilePath)
