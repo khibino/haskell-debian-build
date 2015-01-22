@@ -4,8 +4,8 @@ import Data.List (stripPrefix)
 
 import Debian.Package.Data (Source, Hackage, isBinaryChanges)
 import Debian.Package.Build
-  (BuildMode (Dep, Indep, Src), buildPackage, debi',
-   baseDirCurrent, defaultConfig, Build, runBuild, liftTrace,
+  (BuildMode (Dep, Indep, Src), buildPackage, debi', pwd,
+   baseDirSpecify, defaultConfig, Build, runBuild, liftTrace,
    removeBuildDir, findDebianChanges, genSources, removeGhcLibrary)
 
 
@@ -64,7 +64,9 @@ reinstall mayRev args = do
   install'
 
 run :: Build a -> IO a
-run b = uncurry (runBuild b baseDirCurrent) defaultConfig
+run b = do
+  cur <- pwd
+  uncurry (runBuild b $ baseDirSpecify cur) defaultConfig
 
 parseArgs :: [String] -> (Maybe String, [String])
 parseArgs =  d where
