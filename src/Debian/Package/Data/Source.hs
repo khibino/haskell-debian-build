@@ -24,15 +24,12 @@ module Debian.Package.Data.Source
        ) where
 
 import Control.Arrow (second)
-import Control.Applicative ((<$>), pure, (<*>), (<|>))
-import Control.Monad.Trans.State (StateT, runStateT)
-import Control.Monad.Trans.Class (lift)
-import Numeric (readDec)
-import Data.Maybe (listToMaybe)
-import Data.Char (isSpace)
-import Data.Version (Version (Version, versionBranch), showVersion, parseVersion)
+import Control.Applicative ((<$>), pure, (<*>), (*>), empty, (<|>), many, some, optional)
+import Control.Monad.Trans.State (StateT, runStateT, get, put)
+import Data.Maybe (listToMaybe, maybeToList)
+import Data.Char (isSpace, isDigit)
+import Data.Version (Version (Version, versionBranch), showVersion)
 import Data.List.Split (splitOn)
-import Text.ParserCombinators.ReadP (ReadP, string, readP_to_S, readS_to_P)
 import System.FilePath ((<.>), takeFileName, splitExtension)
 
 import Debian.Package.Data.Hackage
@@ -40,12 +37,41 @@ import Debian.Package.Data.Hackage
    Hackage, mkHackageDefault, NameRule (Simple), debianNamesFromSourceName)
 
 
--- For base-4.5.0.0 - debian wheezy, portability trick.
--- Monad m ==> Applicative (StateT s m)
-type Parser = StateT () ReadP
+type Parser = StateT String Maybe
 
-runParser :: Parser a -> String -> [(a, String)]
-runParser p in0 = [ (x, in1) | ((x, ()), in1) <- readP_to_S (runStateT p ()) in0 ]
+satisfy :: (Char -> Bool) -> Parser Char
+satisfy p = do
+  s <- get
+  case s of
+    c:cs -> if p c
+            then  put cs *> pure c
+            else  empty
+    []   ->       empty
+
+char :: Char -> Parser Char
+char x = satisfy (== x)
+
+_look :: Parser String
+_look =  get
+
+_eof :: Parser ()
+_eof =  do
+  s <- get
+  case s of
+    []   -> pure ()
+    _:_  -> empty
+
+runParser :: Parser a -> String -> Maybe (a, String)
+runParser =  runStateT
+
+digit :: Parser Char
+digit =  satisfy isDigit
+
+int :: Parser Int
+int =  read <$> some digit
+
+string' :: String -> Parser String
+string' =  mapM char
 
 
 -- | Version type for Debian
@@ -78,31 +104,22 @@ isNative' = d where
   d (DebianNative    _ _) = True
   d (DebianNonNative _ _) = False
 
-lexWord :: String -> [(String, String)]
-lexWord =  (:[]) . break isSpace . dropWhile isSpace
+parseVersion' :: Parser Version
+parseVersion' =
+  Version
+  <$> ((:) <$> int <*> many (char '.' *> int))
+  <*> pure []
 
-returnParsed :: Parser a -> String -> Parser a
-returnParsed p s = case [ x | (x, "") <- runParser p s ] of
-  [x] -> return x
-  []  -> fail "ReadP: no parse"
-  _   -> fail "ReadP: ambiguous parse"
+parseDebianVersion' :: Parser DebianVersion
+parseDebianVersion' = do
+  v <- parseVersion'
+  (DebianNonNative v <$> (char '-' *> some (satisfy (not . isSpace)))
+   <|>
+   DebianNative    v <$> optional (string' "+nmu" *> int))
 
-returnParsedVersion :: String -> Parser Version
-returnParsedVersion =  returnParsed $ lift parseVersion
-
-returnParsedNMU :: String -> Parser (Maybe Int)
-returnParsedNMU = returnParsed $
-                  Just <$> lift (string "+nmu" >> readS_to_P readDec) <|>
-                  pure Nothing
-
-parseDebianVersion :: Parser DebianVersion
-parseDebianVersion =  do
-  vs0 <- lift $ readS_to_P lexWord
-  let (vs1, rtag) = break (== '-') vs0
-      (vs2, nmu)  = break (== '+') vs1
-  if rtag == ""
-    then DebianNative    <$> returnParsedVersion vs2 <*> returnParsedNMU nmu
-    else DebianNonNative <$> returnParsedVersion vs1 <*> return (tail rtag)
+_testParseDebianVersion :: [Maybe (DebianVersion, String)]
+_testParseDebianVersion =
+  [ runParser parseDebianVersion' s | s <- [ "1.23.3-4", "1.23", "12.3+nmu2" ] ]
 
 instance Show DebianVersion where
   show = d  where
@@ -110,7 +127,7 @@ instance Show DebianVersion where
     d (DebianNonNative v r)  = showVersion v ++ '-': r
 
 instance Read DebianVersion where
-  readsPrec _ = runParser parseDebianVersion
+  readsPrec _ = maybeToList . runParser parseDebianVersion'
 
 readMaybe' :: Read a => String -> Maybe a
 readMaybe' =  fmap fst . listToMaybe . filter ((== "") . snd) . reads
