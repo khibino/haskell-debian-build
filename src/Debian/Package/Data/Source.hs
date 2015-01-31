@@ -70,8 +70,8 @@ digit =  satisfy isDigit
 int :: Parser Int
 int =  read <$> some digit
 
-string' :: String -> Parser String
-string' =  mapM char
+string :: String -> Parser String
+string =  mapM char
 
 
 -- | Version type for Debian
@@ -110,16 +110,16 @@ parseVersion' =
   <$> ((:) <$> int <*> many (char '.' *> int))
   <*> pure []
 
-parseDebianVersion' :: Parser DebianVersion
-parseDebianVersion' = do
+parseDebianVersion :: Parser DebianVersion
+parseDebianVersion = do
   v <- parseVersion'
   (DebianNonNative v <$> (char '-' *> some (satisfy (not . isSpace)))
    <|>
-   DebianNative    v <$> optional (string' "+nmu" *> int))
+   DebianNative    v <$> optional (string "+nmu" *> int))
 
 _testParseDebianVersion :: [Maybe (DebianVersion, String)]
 _testParseDebianVersion =
-  [ runParser parseDebianVersion' s | s <- [ "1.23.3-4", "1.23", "12.3+nmu2" ] ]
+  [ runParser parseDebianVersion s | s <- [ "1.23.3-4", "1.23", "12.3+nmu2" ] ]
 
 instance Show DebianVersion where
   show = d  where
@@ -127,7 +127,7 @@ instance Show DebianVersion where
     d (DebianNonNative v r)  = showVersion v ++ '-': r
 
 instance Read DebianVersion where
-  readsPrec _ = maybeToList . runParser parseDebianVersion'
+  readsPrec _ = maybeToList . runParser parseDebianVersion
 
 readMaybe' :: Read a => String -> Maybe a
 readMaybe' =  fmap fst . listToMaybe . filter ((== "") . snd) . reads
