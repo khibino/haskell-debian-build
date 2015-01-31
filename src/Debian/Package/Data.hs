@@ -10,8 +10,8 @@
 -- This module provides data-type namespace.
 module Debian.Package.Data
        ( module Debian.Package.Data.Hackage
-       , module Debian.Package.Data.Source
+       , module Debian.Package.Data.Packages
        ) where
 
 import Debian.Package.Data.Hackage
-import Debian.Package.Data.Source
+import Debian.Package.Data.Packages

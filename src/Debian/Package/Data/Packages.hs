@@ -1,5 +1,5 @@
 -- |
--- Module      : Debian.Package.Data.Source
+-- Module      : Debian.Package.Data.Packages
 -- Copyright   : 2014 Kei Hibino
 -- License     : BSD3
 --
@@ -7,8 +7,8 @@
 -- Stability   : experimental
 -- Portability : portable
 --
--- This module provides data types of debian source package meta information.
-module Debian.Package.Data.Source
+-- This module provides data types of debian packages meta information.
+module Debian.Package.Data.Packages
        ( DebianVersion, versionFromHackageVersion, readDebianVersion, origVersion', isNative'
 
        , Source, mkSource, sourceName, version, origVersion, isNative
