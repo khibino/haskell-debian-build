@@ -17,7 +17,7 @@ module Debian.Package.Data.Packages
 
        , parseChangeLog
 
-       , ChangesType (..), takeChangesType, isSourceChanges, isBinaryChanges
+       , PackageType (..), takeChangesType, isSourcePackage, isBinaryPackage
 
        , HaskellPackage, hackage, package
        , haskellPackageDefault, haskellPackageFromPackage
@@ -203,35 +203,35 @@ parseChangeLog log' = do
       dverS <- lookup' "Version"
       readDebianVersion dverS
 
--- | Debian .changes file types
-data ChangesType
-  = ChangesArch String
-  | ChangesAll
-  | ChangesSource
+-- | Debian package types
+data PackageType
+  = PackageArch String
+  | PackageAll
+  | PackageSource
   deriving (Eq, Show)
 
--- | Take 'ChangesType' from debian .changes file path
-takeChangesType :: FilePath -> Maybe ChangesType
+-- | Take 'PackageType' from debian .changes file path
+takeChangesType :: FilePath -> Maybe PackageType
 takeChangesType path = d . splitExtension $ takeFileName path  where
   d (n, ".changes") = case xs of
     [_, _, a] -> case a of
-      "all"    -> Just   ChangesAll
-      "source" -> Just   ChangesSource
-      _        -> Just $ ChangesArch a
+      "all"    -> Just   PackageAll
+      "source" -> Just   PackageSource
+      _        -> Just $ PackageArch a
     _          -> Nothing
     where xs = splitOn "_" n
   d (_, _)     =  Nothing
 
--- | Test changes file type is source package.
-isSourceChanges :: ChangesType -> Bool
-isSourceChanges = d where
-  d (ChangesArch _) = False
-  d  ChangesAll     = False
-  d  ChangesSource  = True
+-- | Test package type is source package.
+isSourcePackage :: PackageType -> Bool
+isSourcePackage = d where
+  d (PackageArch _) = False
+  d  PackageAll     = False
+  d  PackageSource  = True
 
--- | Test changes file type is binary package.
-isBinaryChanges :: ChangesType -> Bool
-isBinaryChanges = not . isSourceChanges
+-- | Test package type is binary package.
+isBinaryPackage :: PackageType -> Bool
+isBinaryPackage = not . isSourcePackage
 
 
 -- | Debian source package type for Haskell

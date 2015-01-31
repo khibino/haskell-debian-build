@@ -39,7 +39,7 @@ import Data.Maybe (catMaybes)
 import Debian.Package.Data
   (Hackage, hackageLongName, hackageArchive,
    Source, origArchiveName, nativeArchiveName, sourceDirName, isNative,
-   ChangesType, takeChangesType,
+   PackageType, takeChangesType,
    HaskellPackage, hackage, package, haskellPackageFromPackage)
 import Debian.Package.Build.Monad
   (Build, liftTrace, bracketBuild_, Config (..), askConfig, askBaseDir, askBuildDir)
@@ -233,7 +233,7 @@ findDebianChangeLog =  MaybeT $ do
              else Nothing
 
 -- | Find debian .changes files
-findDebianChanges :: Build [(FilePath, ChangesType)]
+findDebianChanges :: Build [(FilePath, PackageType)]
 findDebianChanges =  do
   bd <- getBuildDir
   fs <- liftIO $ getDirectoryContents bd
