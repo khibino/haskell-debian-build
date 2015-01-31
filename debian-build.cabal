@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:
                      Debian.Package.Data.Hackage
-                     Debian.Package.Data.Source
+                     Debian.Package.Data.Packages
                      Debian.Package.Data
                      Debian.Package.Build.Monad
                      Debian.Package.Build.Cabal
