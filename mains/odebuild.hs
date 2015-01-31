@@ -2,7 +2,7 @@ import System.Environment (getProgName, getArgs)
 import Control.Monad (void, when)
 import Data.List (stripPrefix)
 
-import Debian.Package.Data (Source, Hackage, isBinaryChanges)
+import Debian.Package.Data (Source, Hackage, isBinaryPackage)
 import Debian.Package.Build
   (BuildMode (Dep, Indep, Src), buildPackage, debi', pwd,
    defaultConfig, Build, runBuild, liftTrace,
@@ -18,7 +18,7 @@ remove' hkg = liftTrace $ sequence_ [removeGhcLibrary m hkg | m <- defualtModes]
 install' :: Build ()
 install' =  do
   ps <- findDebianChanges
-  let cs = [c | (c, t) <- ps, isBinaryChanges t ]
+  let cs = [c | (c, t) <- ps, isBinaryPackage t ]
   liftTrace $ do
     when (null cs) $ fail "No .changes files found!"
     mapM_ (\c -> debi' [c]) cs
