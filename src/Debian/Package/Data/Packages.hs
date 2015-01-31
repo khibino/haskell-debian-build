@@ -19,6 +19,8 @@ module Debian.Package.Data.Packages
 
        , PackageType (..), takeChangesType, isSourcePackage, isBinaryPackage
 
+       , Control (..), parseControlEntry, parseControlPackages, parseControl
+
        , HaskellPackage, hackage, package
        , haskellPackageDefault, haskellPackageFromPackage
        ) where
@@ -183,8 +185,8 @@ sourceDirName pkg = sourceName pkg ++ '-' : showVersion (origVersion pkg)
 deriveHackageVersion :: Source -> HackageVersion
 deriveHackageVersion =  mkHackageVersion' . versionBranch . origVersion where
 
-parseLine :: String -> Maybe (String, String)
-parseLine =
+parseColonLine :: String -> Maybe (String, String)
+parseColonLine =
   (fmap fst .) . runParser $
   (,) <$> some (notChar ':') <*> (char ':' *> many space *> many anyChar <* eof)
 
@@ -196,7 +198,7 @@ parseChangeLog log' = do
   dver <- mayDebVer
   return $ mkSource deb dver
   where
-    pairs = mapMaybe parseLine . lines $ log'
+    pairs = mapMaybe parseColonLine . lines $ log'
     lookup' = (`lookup` pairs)
     mayDebSrc = lookup' "Source"
     mayDebVer = do
@@ -205,7 +207,7 @@ parseChangeLog log' = do
 
 -- | Debian package types
 data PackageType
-  = PackageArch String
+  = PackageArch (Maybe String)
   | PackageAll
   | PackageSource
   deriving (Eq, Show)
@@ -217,7 +219,7 @@ takeChangesType path = d . splitExtension $ takeFileName path  where
     [_, _, a] -> case a of
       "all"    -> Just   PackageAll
       "source" -> Just   PackageSource
-      _        -> Just $ PackageArch a
+      _        -> Just . PackageArch $ Just a
     _          -> Nothing
     where xs = splitOn "_" n
   d (_, _)     =  Nothing
@@ -232,6 +234,50 @@ isSourcePackage = d where
 -- | Test package type is binary package.
 isBinaryPackage :: PackageType -> Bool
 isBinaryPackage = not . isSourcePackage
+
+-- | Type for debian control meta-data.
+data Control =
+  Control
+  { controlSource :: String
+  , controlArch   :: [String]
+  , controlAll    :: [String]
+  } deriving (Eq, Show)
+
+-- | Parse an package entry in control file.
+parseControlEntry :: [String] -> Maybe (PackageType, String)
+parseControlEntry b =
+  do a <- lookup' "Architecture"
+     p <- lookup' "Package"
+     Just $ if a == "all"
+            then (PackageAll, p)
+            else (PackageArch $ Just a, p)
+  <|>
+  do s <- lookup' "Source"
+     Just (PackageSource, s)
+  where ps = mapMaybe parseColonLine b
+        lookup' = (`lookup` ps)
+
+packagesPartition :: [(PackageType, a)] -> ([a], [a], [a])
+packagesPartition = rec'  where
+  rec' []      = ([], [], [])
+  rec' (x:xs)  = case x of
+    (PackageSource, p) -> (p:a, b, c)
+    (PackageArch _, q) -> (a, q:b, c)
+    (PackageAll   , r) -> (a, b, r:c)
+    where (a, b, c) = rec' xs
+
+-- | Parse debian control file into package list.
+parseControlPackages :: String -> [(PackageType, String)]
+parseControlPackages =
+  mapMaybe parseControlEntry
+  . filter (not . null) . splitOn [""] . lines
+
+-- | Parse debian control file into package list.
+parseControl :: String -> Maybe Control
+parseControl in' = do
+  let (src, arch, all') = packagesPartition $ parseControlPackages in'
+  s <- listToMaybe src
+  Just $ Control s arch all'
 
 
 -- | Debian source package type for Haskell
