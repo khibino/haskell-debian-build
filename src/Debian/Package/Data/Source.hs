@@ -23,10 +23,9 @@ module Debian.Package.Data.Source
        , haskellPackageDefault, haskellPackageFromPackage
        ) where
 
-import Control.Arrow (second)
-import Control.Applicative ((<$>), pure, (<*>), (*>), empty, (<|>), many, some, optional)
+import Control.Applicative ((<$>), pure, (<*>), (*>), (<*), empty, (<|>), many, some, optional)
 import Control.Monad.Trans.State (StateT, runStateT, get, put)
-import Data.Maybe (listToMaybe, maybeToList)
+import Data.Maybe (listToMaybe, maybeToList, mapMaybe)
 import Data.Char (isSpace, isDigit)
 import Data.Version (Version (Version, versionBranch), showVersion)
 import Data.List.Split (splitOn)
@@ -48,14 +47,11 @@ satisfy p = do
             else  empty
     []   ->       empty
 
-char :: Char -> Parser Char
-char x = satisfy (== x)
-
 _look :: Parser String
 _look =  get
 
-_eof :: Parser ()
-_eof =  do
+eof :: Parser ()
+eof =  do
   s <- get
   case s of
     []   -> pure ()
@@ -63,6 +59,18 @@ _eof =  do
 
 runParser :: Parser a -> String -> Maybe (a, String)
 runParser =  runStateT
+
+anyChar :: Parser Char
+anyChar =  satisfy (const True)
+
+char :: Char -> Parser Char
+char x = satisfy (== x)
+
+notChar :: Char -> Parser Char
+notChar x = satisfy (/= x)
+
+space :: Parser Char
+space =  char ' '
 
 digit :: Parser Char
 digit =  satisfy isDigit
@@ -175,6 +183,11 @@ sourceDirName pkg = sourceName pkg ++ '-' : showVersion (origVersion pkg)
 deriveHackageVersion :: Source -> HackageVersion
 deriveHackageVersion =  mkHackageVersion' . versionBranch . origVersion where
 
+parseLine :: String -> Maybe (String, String)
+parseLine =
+  (fmap fst .) . runParser $
+  (,) <$> some (notChar ':') <*> (char ':' *> many space *> many anyChar <* eof)
+
 -- | Try to generate 'Source' from debian changelog string
 parseChangeLog :: String       -- ^ dpkg-parsechangelog result string
                -> Maybe Source -- ^ Source structure
@@ -183,11 +196,11 @@ parseChangeLog log' = do
   dver <- mayDebVer
   return $ mkSource deb dver
   where
-    pairs = map (second tail . break (== ' ')) . lines $ log'
+    pairs = mapMaybe parseLine . lines $ log'
     lookup' = (`lookup` pairs)
-    mayDebSrc = lookup' "Source:"
+    mayDebSrc = lookup' "Source"
     mayDebVer = do
-      dverS <- lookup' "Version:"
+      dverS <- lookup' "Version"
       readDebianVersion dverS
 
 -- | Debian .changes file types
