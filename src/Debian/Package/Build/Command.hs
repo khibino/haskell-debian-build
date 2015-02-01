@@ -17,13 +17,14 @@ module Debian.Package.Build.Command
 
        , unpackInDir, unpack, packInDir', packInDir
 
-       , cabalDebian', cabalDebian, packageVersion, dpkgParseChangeLog
+       , cabalDebian', cabalDebian, packageVersion
+       , dpkgParseChangeLog, dpkgParseControl
 
        , debuild, debi', debi
 
        , BuildMode (..)
 
-       , buildPackage, rebuild
+       , modeListFromControl, buildPackage, rebuild
 
        , removeGhcLibrary
 
@@ -45,7 +46,8 @@ import Data.Version (Version, versionBranch, showVersion)
 
 import Debian.Package.Data
   (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, ghcLibraryDocPackage,
-   Source, parseChangeLog, DebianVersion, readDebianVersion, origVersion')
+   Source, parseChangeLog, DebianVersion, readDebianVersion, origVersion',
+   Control (..), parseControl)
 import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, putLog, bracketTrace_)
 
 
@@ -181,6 +183,14 @@ dpkgParseChangeLog cpath =  do
   maybe (fail $ "parseChangeLog: failed: " ++ str) return
     $ parseChangeLog str
 
+-- | Read debian control file
+dpkgParseControl :: FilePath -> Trace Control
+dpkgParseControl cpath =  do
+  putLog $ unwords ["Reading", cpath, "."]
+  str <- lift $ readFile cpath
+  maybe (fail $ "parseControl: failed: " ++ str) return
+    $ parseControl str
+
 
 run :: String -> [String] -> Trace ()
 run cmd = rawSystem' . (cmd :)
@@ -202,6 +212,14 @@ debi dir = withCurrentDir' dir . debi'
 
 -- | Build mode, all or binary only
 data BuildMode = All | Bin | Src | Dep | Indep
+               deriving (Eq, Show)
+
+-- | Infer all build mode list from debian control file data
+modeListFromControl :: Control -> [BuildMode]
+modeListFromControl c =
+  Src
+  :  [ Dep   | not . null $ controlArch c ]
+  ++ [ Indep | not . null $ controlAll  c ]
 
 -- | Build package using /debuild/ under specified directory
 buildPackage :: FilePath -> BuildMode -> [String] -> Trace ()
@@ -214,10 +232,10 @@ buildPackage dir mode opts = do
   debuild dir $ ["-uc", "-us"] ++ modeOpt mode ++ opts
 
 -- | Clean and build package using /debuild/ under specified directory
-rebuild :: FilePath -> BuildMode -> [String] -> Trace ()
-rebuild dir mode opts = do
+rebuild :: FilePath -> [BuildMode] -> [String] -> Trace ()
+rebuild dir modes opts = do
   debuild dir ["clean"]
-  buildPackage dir mode opts
+  sequence_ [ buildPackage dir mode opts | mode <- modes ]
 
 -- | Remove ghc library packages under specified source package directory
 removeGhcLibrary :: BuildMode -> Hackage -> Trace ()
