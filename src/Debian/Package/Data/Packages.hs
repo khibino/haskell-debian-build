@@ -19,7 +19,7 @@ module Debian.Package.Data.Packages
 
        , PackageType (..), takeChangesType, isSourcePackage, isBinaryPackage
 
-       , Control (..), parseControlEntry, parseControlPackages, parseControl
+       , Control (..), parseControlEntry, parseControl
 
        , HaskellPackage, hackage, package
        , haskellPackageDefault, haskellPackageFromPackage
@@ -261,21 +261,17 @@ packagesPartition :: [(PackageType, a)] -> ([a], [a], [a])
 packagesPartition = rec'  where
   rec' []      = ([], [], [])
   rec' (x:xs)  = case x of
-    (PackageSource, p) -> (p:a, b, c)
-    (PackageArch _, q) -> (a, q:b, c)
-    (PackageAll   , r) -> (a, b, r:c)
-    where (a, b, c) = rec' xs
-
--- | Parse debian control file into package list.
-parseControlPackages :: String -> [(PackageType, String)]
-parseControlPackages =
-  mapMaybe parseControlEntry
-  . filter (not . null) . splitOn [""] . lines
+    (PackageSource, a) -> (a:p, q, r)
+    (PackageArch _, a) -> (p, a:q, r)
+    (PackageAll   , a) -> (p, q, a:r)
+    where (p, q, r) = rec' xs
 
 -- | Parse debian control file into package list.
 parseControl :: String -> Maybe Control
 parseControl in' = do
-  let (src, arch, all') = packagesPartition $ parseControlPackages in'
+  let (src, arch, all') =
+        packagesPartition . mapMaybe parseControlEntry
+        . filter (not . null) . splitOn [""] . lines $ in'
   s <- listToMaybe src
   Just $ Control s arch all'
 
