@@ -20,11 +20,11 @@ module Debian.Package.Build.Command
        , cabalDebian', cabalDebian, packageVersion
        , dpkgParseChangeLog, dpkgParseControl
 
-       , debuild, debi', debi
+       , debuild, debi', debi, aptGetBuildDepends
 
        , BuildMode (..)
 
-       , modeListFromControl, buildPackage, rebuild
+       , modeListFromControl, buildPackage, build, rebuild
 
        , removeGhcLibrary
 
@@ -36,9 +36,9 @@ module Debian.Package.Build.Command
 import Data.Maybe (fromMaybe)
 import Control.Arrow ((&&&))
 import Control.Applicative ((<$>))
-import Control.Monad (unless)
+import Control.Monad (when, unless)
 import Control.Monad.Trans.Class (lift)
-import System.FilePath ((<.>), takeDirectory)
+import System.FilePath ((</>), (<.>), takeDirectory)
 import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
@@ -210,6 +210,11 @@ debi' =  rawSystem' . (["sudo", "debi"] ++)
 debi :: FilePath -> [String] -> Trace ()
 debi dir = withCurrentDir' dir . debi'
 
+-- | Install build-depends
+aptGetBuildDepends :: FilePath -> Trace ()
+aptGetBuildDepends dir =
+  withCurrentDir' dir $ rawSystem' ["sudo", "apt-get-build-depends"]
+
 -- | Build mode, all or binary only
 data BuildMode = All | Bin | Src | Dep | Indep
                deriving (Eq, Show)
@@ -221,6 +226,9 @@ modeListFromControl c =
   :  [ Dep   | not . null $ controlArch c ]
   ++ [ Indep | not . null $ controlAll  c ]
 
+hasBinaryBuildMode :: BuildMode -> Bool
+hasBinaryBuildMode =  not . (== Src)
+
 -- | Build package using /debuild/ under specified directory
 buildPackage :: FilePath -> BuildMode -> [String] -> Trace ()
 buildPackage dir mode opts = do
@@ -231,11 +239,22 @@ buildPackage dir mode opts = do
       modeOpt Indep  =  ["-A"]
   debuild dir $ ["-uc", "-us"] ++ modeOpt mode ++ opts
 
+-- | Build package with specified mode list.
+--   Calculated mode list from control is used when not specified build modes.
+build :: FilePath -> [BuildMode] -> [String] -> Trace ()
+build dir modes' opts = do
+  modes <-
+    if null modes'
+    then modeListFromControl <$> dpkgParseControl (dir </> "debian" </> "control")
+    else return modes'
+  when (any hasBinaryBuildMode modes) $ aptGetBuildDepends dir
+  sequence_ [buildPackage dir m opts | m <- modes]
+
 -- | Clean and build package using /debuild/ under specified directory
 rebuild :: FilePath -> [BuildMode] -> [String] -> Trace ()
 rebuild dir modes opts = do
   debuild dir ["clean"]
-  sequence_ [ buildPackage dir mode opts | mode <- modes ]
+  build dir modes opts
 
 -- | Remove ghc library packages under specified source package directory
 removeGhcLibrary :: BuildMode -> Hackage -> Trace ()
