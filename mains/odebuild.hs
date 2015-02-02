@@ -1,12 +1,12 @@
 import System.Environment (getProgName, getArgs)
-import System.FilePath ((</>))
 import Control.Monad (void, when)
 import Data.List (stripPrefix)
 
 import Debian.Package.Data (Source, Hackage, isBinaryPackage)
+import qualified Debian.Package.Build.Command as Command
 import Debian.Package.Build
-  (BuildMode (Dep, Indep, Src), buildPackage, debi', pwd,
-   defaultConfig, Build, runBuild, liftTrace, dpkgParseControl, modeListFromControl,
+  (BuildMode (Dep, Indep, Src), debi', pwd,
+   defaultConfig, Build, runBuild, liftTrace,
    removeBuildDir, findDebianChanges, genSources, removeGhcLibrary)
 
 
@@ -50,8 +50,7 @@ source mayRev = do
 build :: Maybe String -> [String] -> Build (Source, Maybe Hackage)
 build mayRev opts = do
   ((_, dir), src, mayH) <- source mayRev
-  ctrl <- liftTrace . dpkgParseControl $ dir </> "debian" </> "control"
-  liftTrace $ sequence_ [buildPackage dir m opts | m <- modeListFromControl ctrl]
+  liftTrace $ Command.build dir [] opts
   return (src, mayH)
 
 install :: Maybe String -> [String] -> Build ()
