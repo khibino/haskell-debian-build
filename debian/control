@@ -11,6 +11,8 @@ Build-Depends: debhelper (>= 7.0)
                , ghc-prof | libghc-cabal-prof
                , libghc-transformers-dev
                , libghc-transformers-prof
+               , libghc-split-dev
+               , libghc-split-prof
 Build-Depends-Indep: ghc-doc
                      , ghc-doc | libghc-cabal-doc
                      , libghc-transformers-doc
