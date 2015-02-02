@@ -27,6 +27,7 @@ Recommends: ${haskell:Recommends}
          , cabal-debian
          , dpkg-dev
          , devscripts
+	 , haskell-debian-utils
          , apt
 	 , sudo
 Suggests: ${haskell:Suggests}
@@ -98,6 +99,7 @@ Depends: ${shlibs:Depends}
          , cabal-debian
          , dpkg-dev
          , devscripts
+	 , haskell-debian-utils
          , apt
 	 , sudo
 Recommends: ${haskell:Recommends}
