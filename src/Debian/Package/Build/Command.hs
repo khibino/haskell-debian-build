@@ -241,20 +241,20 @@ buildPackage dir mode opts = do
 
 -- | Build package with specified mode list.
 --   Calculated mode list from control is used when not specified build modes.
-build :: FilePath -> [BuildMode] -> [String] -> Trace ()
-build dir modes' opts = do
+build :: FilePath -> [BuildMode] -> Bool -> [String] -> Trace ()
+build dir modes' installDep opts = do
   modes <-
     if null modes'
     then modeListFromControl <$> dpkgParseControl (dir </> "debian" </> "control")
     else return modes'
-  when (any hasBinaryBuildMode modes) $ aptGetBuildDepends dir
+  when (installDep && any hasBinaryBuildMode modes) $ aptGetBuildDepends dir
   sequence_ [buildPackage dir m opts | m <- modes]
 
 -- | Clean and build package using /debuild/ under specified directory
 rebuild :: FilePath -> [BuildMode] -> [String] -> Trace ()
 rebuild dir modes opts = do
   debuild dir ["clean"]
-  build dir modes opts
+  build dir modes False opts
 
 -- | Remove ghc library packages under specified source package directory
 removeGhcLibrary :: BuildMode -> Hackage -> Trace ()

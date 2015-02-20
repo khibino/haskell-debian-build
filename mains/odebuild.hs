@@ -50,7 +50,7 @@ source mayRev = do
 build :: Maybe String -> [String] -> Build (Source, Maybe Hackage)
 build mayRev opts = do
   ((_, dir), src, mayH) <- source mayRev
-  liftTrace $ Command.build dir [] opts
+  liftTrace $ Command.build dir [] False opts
   return (src, mayH)
 
 install :: Maybe String -> [String] -> Build ()
