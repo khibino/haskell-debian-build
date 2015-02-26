@@ -13,11 +13,8 @@ import Debian.Package.Build
    removeBuildDir, findDebianChanges, genSources, removeGhcLibrary)
 
 
-defualtModes :: [BuildMode]
-defualtModes =  [Dep, Indep, Src]
-
 remove' :: Hackage -> Build ()
-remove' hkg = liftTrace $ sequence_ [removeGhcLibrary m hkg | m <- defualtModes]
+remove' hkg = liftTrace $ sequence_ [removeGhcLibrary m hkg | m <- [Dep, Indep, Src]]
 
 install' :: Build ()
 install' =  do
