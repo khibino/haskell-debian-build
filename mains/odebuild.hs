@@ -1,6 +1,9 @@
-import System.Environment (getProgName, getArgs)
+import Control.Arrow ((>>>))
 import Control.Monad (void, when)
-import Data.List (stripPrefix)
+import System.Environment (getProgName, getArgs)
+import System.Console.GetOpt
+  (OptDescr (Option), ArgDescr (ReqArg, NoArg), ArgOrder (RequireOrder),
+   usageInfo, getOpt)
 
 import Debian.Package.Data (Source, Hackage, isBinaryPackage)
 import qualified Debian.Package.Build.Command as Command
@@ -25,42 +28,72 @@ install' =  do
     mapM_ (\c -> debi' [c]) cs
 
 
+data ODebuildOptions =
+  ODebuildOptions
+  { revision    :: Maybe String
+  , installDeps :: Bool
+  } deriving Show
+
+defaultOptions :: ODebuildOptions
+defaultOptions =
+  ODebuildOptions
+  { revision     =  Nothing
+  , installDeps  =  False
+  }
+
+descs :: [OptDescr (ODebuildOptions -> ODebuildOptions)]
+descs =
+  [ Option [] ["revision"]
+    (ReqArg (\s opts -> opts { revision = Just s }) "DEBIAN_REVISION")
+    "debian package revision to pass to cabal-debian"
+  , Option [] ["install-deps"]
+    (NoArg $ \opts -> opts { installDeps = True })
+    "install build depends when to run build"
+  ]
+
+parseOption :: [String]
+            -> (ODebuildOptions -> ODebuildOptions, ([String], [String]))
+parseOption args = (foldr (>>>) id ufs, (ss1, ss2))  where
+  (ufs, ss1, ss2) = getOpt RequireOrder descs args
+
 help :: IO ()
 help =  do
   prog <- getProgName
-  let rev  = "[--revision=<debian revision>]"
-      opts = "[debuild options]"
-  putStr . unlines $ map unwords
-    [[prog, "clean"],
-     [prog, "source", rev],
-     [prog, "build", rev, opts],
-     [prog, "install", rev, opts],
-     [prog, "reinstall", rev, opts],
-     ["-- reinstall (Remove and install) support only for Haskell"],
-     ["-- Revision string may use on auto-generating debian directory."]]
+  let opts  = "[options]"
+      debOpts = "[-- [debuild options]]"
+      msg = unlines $ map unwords
+            [ [prog, "clean"]
+            , [prog, "source", opts]
+            , [prog, "build", opts, debOpts]
+            , [prog, "install", opts, debOpts]
+            , [prog, "reinstall", opts, debOpts]
+            , ["  reinstall (Remove and install) support only for Haskell"]
+            , ["  Revision string may use on auto-generating debian directory."]
+            ]
+  putStr $ usageInfo msg descs
 
 clean :: Build ()
 clean =  removeBuildDir
 
-source :: Maybe String -> Build ((FilePath, FilePath), Source, Maybe Hackage)
-source mayRev = do
+source :: ODebuildOptions -> Build ((FilePath, FilePath), Source, Maybe Hackage)
+source opts = do
   clean
-  maybe (fail "Illegal state: genSources") return =<< genSources mayRev
+  maybe (fail "Illegal state: genSources") return =<< genSources (revision opts)
 
-build :: Maybe String -> [String] -> Build (Source, Maybe Hackage)
-build mayRev opts = do
-  ((_, dir), src, mayH) <- source mayRev
-  liftTrace $ Command.build dir [] False opts
+build :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
+build opts args = do
+  ((_, dir), src, mayH) <- source opts
+  liftTrace $ Command.build dir [] (installDeps opts) args
   return (src, mayH)
 
-install :: Maybe String -> [String] -> Build ()
-install mayRev args = do
-  void $ build mayRev args
+install :: ODebuildOptions -> [String] -> Build ()
+install opts args = do
+  void $ build opts args
   install'
 
-reinstall :: Maybe String -> [String] -> Build ()
-reinstall mayRev args = do
-  (_src, mayH) <- build mayRev args
+reinstall :: ODebuildOptions -> [String] -> Build ()
+reinstall opts args = do
+  (_src, mayH) <- build opts args
   maybe (return ()) remove' mayH
   install'
 
@@ -69,12 +102,19 @@ run b = do
   cur <- pwd
   uncurry (runBuild b cur) defaultConfig
 
-parseArgs :: [String] -> (Maybe String, [String])
-parseArgs =  d where
-  d aas@(a:as) = case stripPrefix "--revision=" a of
-    r@(Just _)  ->  (r, as)
-    Nothing     ->  (Nothing, aas)
-  d []         =    (Nothing, [])
+parseArgs :: [String] -> IO (ODebuildOptions, [String])
+parseArgs args0
+  | not $ null errs  = fail $ concat errs
+  | not $ null args1 = fail $ "Unknown arguments: " ++ unwords args1
+  | otherwise        = return
+                       (f defaultOptions, drop 1 rest )  where
+  (opt, rest) = break (== "--") args0
+  (f, (args1, errs)) = parseOption opt
+
+runArgs :: (ODebuildOptions -> [String] -> Build a) -> [String] -> IO a
+runArgs act as = do
+  (opts, args) <- parseArgs as
+  run $ act opts args
 
 main :: IO ()
 main =  do
@@ -84,13 +124,12 @@ main =  do
     "--help" : _          ->  help
     "help"   : _          ->  help
     as2@(c : as1)  ->  do
-      let (mayRev, args) = parseArgs as1
-      run $ case c of
-        "clean"         ->    clean
-        "source"        ->    void $ source mayRev
-        "build"         ->    void $ build mayRev args
-        "install"       ->    install mayRev args
-        "reinstall"     ->    reinstall mayRev args
-        _               ->    void . uncurry build $ parseArgs as2
+      case c of
+        "clean"         ->    run clean
+        "source"        ->    void $ runArgs (const . source) as1
+        "build"         ->    void $ runArgs build as1
+        "install"       ->    runArgs install as1
+        "reinstall"     ->    runArgs reinstall as1
+        _               ->    void $ runArgs build as2
 
-    []                  -> run . void $ build Nothing []
+    []                  -> run . void $ build defaultOptions []
