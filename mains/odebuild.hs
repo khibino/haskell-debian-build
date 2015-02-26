@@ -77,11 +77,14 @@ source opts = do
   clean
   maybe (fail "Illegal state: genSources") return =<< genSources (revision opts)
 
-build :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
-build opts args = do
+build' :: [BuildMode] -> ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
+build' modes opts args = do
   ((_, dir), src, mayH) <- source opts
-  liftTrace $ Command.build dir [] (installDeps opts) args
+  liftTrace $ Command.build dir modes (installDeps opts) args
   return (src, mayH)
+
+build :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
+build =  build' []
 
 install :: ODebuildOptions -> [String] -> Build ()
 install opts args = do
