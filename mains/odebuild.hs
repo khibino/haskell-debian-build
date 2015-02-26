@@ -60,7 +60,8 @@ help =  do
       debOpts = "[-- [debuild options]]"
       msg = unlines $ map unwords
             [ [prog, "clean"]
-            , [prog, "source", opts]
+            , [prog, "prepare", opts]
+            , [prog, "source", opts, debOpts]
             , [prog, "build", opts, debOpts]
             , [prog, "install", opts, debOpts]
             , [prog, "reinstall", opts, debOpts]
@@ -72,16 +73,19 @@ help =  do
 clean :: Build ()
 clean =  removeBuildDir
 
-source :: ODebuildOptions -> Build ((FilePath, FilePath), Source, Maybe Hackage)
-source opts = do
+prepare :: ODebuildOptions -> Build ((FilePath, FilePath), Source, Maybe Hackage)
+prepare opts = do
   clean
   maybe (fail "Illegal state: genSources") return =<< genSources (revision opts)
 
 build' :: [BuildMode] -> ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
 build' modes opts args = do
-  ((_, dir), src, mayH) <- source opts
+  ((_, dir), src, mayH) <- prepare opts
   liftTrace $ Command.build dir modes (installDeps opts) args
   return (src, mayH)
+
+source :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
+source = build' [Src]
 
 build :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
 build =  build' []
@@ -126,7 +130,8 @@ main =  do
     as2@(c : as1)  ->  do
       case c of
         "clean"         ->    run clean
-        "source"        ->    void $ runArgs (const . source) as1
+        "prepare"       ->    void $ runArgs (const . prepare) as1
+        "source"        ->    void $ runArgs source as1
         "build"         ->    void $ runArgs build as1
         "install"       ->    runArgs install as1
         "reinstall"     ->    runArgs reinstall as1
