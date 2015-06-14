@@ -153,17 +153,18 @@ withCurrentDir' dir act = do
 cabalDebian' :: Maybe String -> Trace ()
 cabalDebian' mayRev = do
   ver <-  origVersion' <$> packageVersion "cabal-debian"
-  case versionBranch ver of
-    (x:_) | x <= 1     ->  fail $ "Version of cabal-debian is TOO OLD: " ++ showVersion ver ++
-                           " - Under version 1 generates wrong dependencies."
-          | otherwise  ->  return ()
-    []                 ->  return ()
+  let revision = fromMaybe "1~autogen1" mayRev
+      oldArgs = ["--quilt", "--revision=" ++ revision]
+  args <- case versionBranch ver of
+    (x:y:_)  | x <= 1             ->  fail
+                                      $ "Version of cabal-debian is TOO OLD: "
+                                      ++ showVersion ver
+                                      ++ " - Under version 1 generates wrong dependencies."
+             | x == 4 && y >= 19  ->  return ["--revision=" ++ '-' : revision]
+             | otherwise          ->  return oldArgs
+    _                             ->  return oldArgs
 
-  rawSystem'
-    [ "cabal-debian"
-    , "--quilt"
-    , "--revision=" ++ fromMaybe "1~autogen1" mayRev
-    ]
+  rawSystem' $ "cabal-debian" : args
 
 -- | Call /cabal-debian/ command under specified directory
 cabalDebian :: FilePath -> Maybe String -> Trace ()
