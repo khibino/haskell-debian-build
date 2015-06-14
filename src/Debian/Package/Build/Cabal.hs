@@ -30,7 +30,7 @@ import Distribution.Text (disp)
 import Distribution.Verbosity (silent)
 import Distribution.Package (pkgName, pkgVersion)
 import Distribution.PackageDescription
-  (GenericPackageDescription, packageDescription, PackageDescription, package)
+  (packageDescription, PackageDescription, package)
 import Distribution.PackageDescription.Parse (readPackageDescription)
 
 import Distribution.Simple (defaultMain)

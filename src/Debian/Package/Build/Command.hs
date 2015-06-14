@@ -42,7 +42,7 @@ import System.FilePath ((</>), (<.>), takeDirectory)
 import qualified System.Directory as D
 import qualified System.Process as Process
 import System.Exit (ExitCode (..))
-import Data.Version (Version, versionBranch, showVersion)
+import Data.Version (versionBranch, showVersion)
 
 import Debian.Package.Data
   (Hackage, ghcLibraryBinPackages, ghcLibraryPackages, ghcLibraryDocPackage,
