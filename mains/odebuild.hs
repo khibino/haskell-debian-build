@@ -1,5 +1,4 @@
-import Control.Arrow ((>>>))
-import Control.Monad (void, when)
+import Control.Monad (void, when, (>=>))
 import System.Environment (getProgName, getArgs)
 import System.Console.GetOpt
   (OptDescr (Option), ArgDescr (ReqArg, NoArg), ArgOrder (RequireOrder),
@@ -38,19 +37,19 @@ defaultOptions =
   , installDeps  =  False
   }
 
-descs :: [OptDescr (ODebuildOptions -> ODebuildOptions)]
+descs :: [OptDescr (ODebuildOptions -> Either String ODebuildOptions)]
 descs =
   [ Option [] ["revision"]
-    (ReqArg (\s opts -> opts { revision = Just s }) "DEBIAN_REVISION")
+    (ReqArg (\s opts -> return $ opts { revision = Just s }) "DEBIAN_REVISION")
     "debian package revision to pass to cabal-debian"
   , Option [] ["install-deps"]
-    (NoArg $ \opts -> opts { installDeps = True })
+    (NoArg $ \opts   -> return $ opts { installDeps = True })
     "install build depends when to run build"
   ]
 
 parseOption :: [String]
-            -> (ODebuildOptions -> ODebuildOptions, ([String], [String]))
-parseOption args = (foldr (>>>) id ufs, (ss1, ss2))  where
+            -> (ODebuildOptions -> Either String ODebuildOptions, ([String], [String]))
+parseOption args = (foldr (>=>) return ufs, (ss1, ss2))  where
   (ufs, ss1, ss2) = getOpt RequireOrder descs args
 
 help :: IO ()
@@ -110,10 +109,13 @@ parseArgs :: [String] -> IO (ODebuildOptions, [String])
 parseArgs args0
   | not $ null errs  = fail $ concat errs
   | not $ null args1 = fail $ "Unknown arguments: " ++ unwords args1
-  | otherwise        = return
-                       (f defaultOptions, drop 1 rest )  where
-  (opt, rest) = break (== "--") args0
-  (f, (args1, errs)) = parseOption opt
+  | otherwise        =
+      either (fail . ("Option parse error: " ++)) return $ do
+        opts <- f defaultOptions
+        return (opts, drop 1 rest)
+      where
+        (opt, rest) = break (== "--") args0
+        (f, (args1, errs)) = parseOption opt
 
 runArgs :: (ODebuildOptions -> [String] -> Build a) -> [String] -> IO a
 runArgs act as = do
