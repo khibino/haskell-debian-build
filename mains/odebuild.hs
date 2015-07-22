@@ -1,9 +1,9 @@
 import Control.Monad (void, when, (>=>))
+import Data.Maybe (listToMaybe)
 import System.Environment (getProgName, getArgs)
 import System.Console.GetOpt
   (OptDescr (Option), ArgDescr (ReqArg, NoArg), ArgOrder (RequireOrder),
    usageInfo, getOpt)
-import Text.Read (readMaybe)
 
 import Debian.Package.Data (Source, Hackage, isBinaryPackage)
 import qualified Debian.Package.Build.Command as Command
@@ -50,7 +50,7 @@ descs =
     "install build depends before running build"
   , Option [] ["mode"]
     (ReqArg (\s opts -> maybe (Left $ "Unknown build mode: " ++ s) Right $ do
-                m <- readMaybe s
+                m <- listToMaybe [m | (m, "") <- reads s]
                 return $ opts { buildModes = buildModes opts . (m : ) } )
      "BUILD_MODE")
     "add build-mode to build-mode list to specify"
