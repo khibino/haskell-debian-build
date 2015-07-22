@@ -3,6 +3,7 @@ import System.Environment (getProgName, getArgs)
 import System.Console.GetOpt
   (OptDescr (Option), ArgDescr (ReqArg, NoArg), ArgOrder (RequireOrder),
    usageInfo, getOpt)
+import Text.Read (readMaybe)
 
 import Debian.Package.Data (Source, Hackage, isBinaryPackage)
 import qualified Debian.Package.Build.Command as Command
@@ -28,13 +29,15 @@ data ODebuildOptions =
   ODebuildOptions
   { revision    :: Maybe String
   , installDeps :: Bool
-  } deriving Show
+  , buildModes  :: [BuildMode] -> [BuildMode]
+  }
 
 defaultOptions :: ODebuildOptions
 defaultOptions =
   ODebuildOptions
   { revision     =  Nothing
   , installDeps  =  False
+  , buildModes   =  id
   }
 
 descs :: [OptDescr (ODebuildOptions -> Either String ODebuildOptions)]
@@ -44,7 +47,13 @@ descs =
     "debian package revision to pass to cabal-debian"
   , Option [] ["install-deps"]
     (NoArg $ \opts   -> return $ opts { installDeps = True })
-    "install build depends when to run build"
+    "install build depends before running build"
+  , Option [] ["mode"]
+    (ReqArg (\s opts -> maybe (Left $ "Unknown build mode: " ++ s) Right $ do
+                m <- readMaybe s
+                return $ opts { buildModes = buildModes opts . (m : ) } )
+     "BUILD_MODE")
+    "add build-mode to build-mode list to specify"
   ]
 
 parseOption :: [String]
@@ -87,7 +96,7 @@ source :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
 source = build' [Src]
 
 build :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
-build =  build' []
+build opts = build' (buildModes opts []) opts
 
 install :: ODebuildOptions -> [String] -> Build ()
 install opts args = do
