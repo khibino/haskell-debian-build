@@ -218,7 +218,7 @@ aptGetBuildDepends dir =
 
 -- | Build mode, all or binary only
 data BuildMode = All | Bin | Src | Dep | Indep
-               deriving (Eq, Show)
+               deriving (Eq, Show, Read)
 
 -- | Infer all build mode list from debian control file data
 modeListFromControl :: Control -> [BuildMode]
