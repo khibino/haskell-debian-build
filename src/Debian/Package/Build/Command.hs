@@ -34,7 +34,6 @@ module Debian.Package.Build.Command
        ) where
 
 import Data.Maybe (fromMaybe)
-import Control.Arrow ((&&&))
 import Control.Applicative ((<$>))
 import Control.Monad (when, unless)
 import Control.Monad.Trans.Class (lift)
@@ -51,29 +50,22 @@ import Debian.Package.Data
 import Debian.Package.Build.Monad (Trace, traceCommand, traceOut, putLog, bracketTrace_)
 
 
-splitCommand :: [a] -> (a, [a])
-splitCommand =  head &&& tail
-
 handleExit :: String -> ExitCode -> IO ()
 handleExit cmd = d  where
   d (ExitFailure rv) = fail $ unwords ["Failed with", show rv ++ ":", cmd]
   d  ExitSuccess     = return ()
 
 -- | Run command without shell and get standard output string.
-readProcess' :: [String] -> Trace String
-readProcess' cmd0 = do
-  traceCommand $ unwords cmd0
-  lift $ do
-    let (cmd, args) = splitCommand cmd0
-    Process.readProcess cmd args ""
+readProcess' :: String -> [String] -> String -> Trace String
+readProcess' cmd args in' = do
+  traceCommand . unwords $ cmd : args
+  lift $ Process.readProcess cmd args in'
 
 -- | Run command without shell
-rawSystem' :: [String] -> Trace ()
-rawSystem' cmd0 = do
-  traceCommand $ unwords cmd0
-  lift $ do
-    let (cmd, args) = splitCommand cmd0
-    Process.rawSystem cmd args >>= handleExit cmd
+rawSystem' :: String -> [String] -> Trace ()
+rawSystem' cmd args = do
+  traceCommand . unwords $ cmd : args
+  lift (Process.rawSystem cmd args >>= handleExit cmd)
 
 -- | Run command with shell
 system' :: String -> Trace ()
@@ -115,14 +107,14 @@ renameFile src dst = do
 -- | Confirm filepath using /ls/ command
 confirmPath :: String -> Trace ()
 confirmPath path =
-  readProcess' ["ls", "-ld", path] >>= traceOut
+  readProcess' "ls" ["-ld", path] "" >>= traceOut
 
 
 -- | Unpack .tar.gz under directory.
 unpackInDir :: FilePath -> FilePath -> Trace ()
 apath `unpackInDir` dir = do
   putLog $ unwords ["Unpacking", apath, "in", dir, "."]
-  rawSystem' ["tar", "-C", dir, "-zxf", apath]
+  rawSystem' "tar" ["-C", dir, "-zxf", apath]
 
 -- | Unpack .tar.gz under archive place.
 unpack :: FilePath -> Trace ()
@@ -132,7 +124,7 @@ unpack apath = apath `unpackInDir` takeDirectory apath
 packInDir' :: FilePath -> FilePath -> FilePath -> Trace ()
 packInDir' pdir apath wdir = do
   putLog $ unwords ["Packing", pdir, "in", wdir, "into", apath, "."]
-  rawSystem' ["tar", "-C", wdir, "-zcf", apath, pdir]
+  rawSystem' "tar" ["-C", wdir, "-zcf", apath, pdir]
 
 -- | Pack directory into same location .tar.gz under working directory
 packInDir :: FilePath -> FilePath -> Trace ()
@@ -164,7 +156,7 @@ cabalDebian' mayRev = do
              | otherwise          ->  return oldArgs
     _                             ->  return oldArgs
 
-  rawSystem' $ "cabal-debian" : args
+  rawSystem' "cabal-debian" args
 
 -- | Call /cabal-debian/ command under specified directory
 cabalDebian :: FilePath -> Maybe String -> Trace ()
@@ -173,14 +165,14 @@ cabalDebian dir = withCurrentDir' dir . cabalDebian'
 -- | Query debian package version
 packageVersion :: String -> Trace DebianVersion
 packageVersion pkg = do
-  vstr <- readProcess' ["dpkg-query", "--show", "--showformat=${Version}", pkg]
+  vstr <- readProcess' "dpkg-query" ["--show", "--showformat=${Version}", pkg] ""
   maybe (fail $ "readDebianVersion: failed: " ++ vstr) return
     $ readDebianVersion vstr
 
 -- | Read debian changelog file and try to parse into 'Source'
 dpkgParseChangeLog :: FilePath -> Trace Source
 dpkgParseChangeLog cpath =  do
-  str <- readProcess' ["dpkg-parsechangelog", "-l" ++ cpath]
+  str <- readProcess' "dpkg-parsechangelog" ["-l" ++ cpath] ""
   maybe (fail $ "parseChangeLog: failed: " ++ str) return
     $ parseChangeLog str
 
@@ -193,11 +185,8 @@ dpkgParseControl cpath =  do
     $ parseControl str
 
 
-run :: String -> [String] -> Trace ()
-run cmd = rawSystem' . (cmd :)
-
 debuild' :: [String] -> Trace ()
-debuild' =  run "debuild"
+debuild' =  rawSystem' "debuild"
 
 -- | Call /debuild/ under specified directory, with command line options
 debuild :: FilePath -> [String] -> Trace ()
@@ -205,7 +194,7 @@ debuild dir = withCurrentDir' dir . debuild'
 
 -- | Just run debi with root user
 debi' :: [String] -> Trace ()
-debi' =  rawSystem' . (["sudo", "debi"] ++)
+debi' =  rawSystem' "sudo" . ("debi" :)
 
 -- | Install packages under specified source package directory
 debi :: FilePath -> [String] -> Trace ()
@@ -214,7 +203,7 @@ debi dir = withCurrentDir' dir . debi'
 -- | Install build-depends
 aptGetBuildDepends :: FilePath -> Trace ()
 aptGetBuildDepends dir =
-  withCurrentDir' dir $ rawSystem' ["sudo", "apt-get-build-depends"]
+  withCurrentDir' dir $ rawSystem' "sudo" ["apt-get-build-depends"]
 
 -- | Build mode, all or binary only
 data BuildMode = All | Bin | Src | Dep | Indep

@@ -78,7 +78,7 @@ removeBuildDir = do
   bldDir <- getBuildDir
   liftTrace $ do
     found <- liftIO $ doesDirectoryExist bldDir
-    when found $ rawSystem' ["rm", "-r", bldDir]
+    when found $ rawSystem' "rm" ["-r", bldDir]
 
 -- | Take debian-directory name from 'Build' action context.
 debianDirName' :: Build FilePath
@@ -104,7 +104,7 @@ copyDebianDir :: FilePath -> Build ()
 copyDebianDir srcDir = do
   debDN       <- debianDirName'
   baseDir     <- askBaseDir
-  liftTrace $ rawSystem' ["cp", "-a", baseDir </> debDN, srcDir </> "."]
+  liftTrace $ rawSystem' "cp" ["-a", baseDir </> debDN, srcDir </> "."]
 
 
 -- Setup source directory under build-directory using rsync.
@@ -121,8 +121,8 @@ rsyncGenOrigSourceDir pkg = do
                  ++ [debDN] ++ confEXs
   liftTrace $ do
     createDirectoryIfMissing srcDir
-    rawSystem'
-      $  ["rsync", "-auv"]
+    rawSystem' "rsync"
+      $  ["-auv"]
       ++ ["--exclude=" ++ e | e <- excludes]
       ++ [baseDir </> ".", srcDir </> "." ]
   return srcDir
