@@ -10,8 +10,6 @@
 -- This module wraps cabal library interfaces to keep sparse dependency to it.
 module Debian.Package.Build.Cabal
        ( findDescriptionFile
-       , parsePackageDescription
-       , hackageLongName, hackageName, hackageVersion
 
        , setupCmd, clean, sdist
        , configure, build, install, register
@@ -25,13 +23,6 @@ import Data.List (isSuffixOf)
 import System.FilePath ((</>))
 import System.Directory (getDirectoryContents, doesFileExist)
 import System.Environment (withArgs)
-
-import Distribution.Text (disp)
-import Distribution.Verbosity (silent)
-import Distribution.Package (pkgName, pkgVersion)
-import Distribution.PackageDescription
-  (packageDescription, PackageDescription, package)
-import Distribution.PackageDescription.Parse (readPackageDescription)
 
 import Distribution.Simple (defaultMain)
 
@@ -48,26 +39,6 @@ findDescriptionFile dir = do
         | otherwise                    =  return False
         where suf = ".cabal"
   fmap (dir </>) . listToMaybe <$> filterM find fs
-
--- | Parse .cabal file
-parsePackageDescription :: FilePath -> IO PackageDescription
-parsePackageDescription =  (packageDescription `fmap`) . readPackageDescription silent
-
--- | Hackage name and version string from 'PackageDescription'
-hackageLongName :: PackageDescription -> String
-hackageLongName =  show . disp . package
-
--- | Hackage name string from 'PackageDescription'
-hackageName :: PackageDescription -> String
-hackageName =  show . disp . pkgName . package
-
--- | Hackage version string from 'PackageDescription'
-hackageVersion :: PackageDescription -> String
-hackageVersion =  show . disp . pkgVersion . package
-
-_testDotCabal :: IO PackageDescription
-_testDotCabal =  do Just path <- findDescriptionFile "."
-                    parsePackageDescription path
 
 setup :: [String] -> Trace ()
 setup args =  do

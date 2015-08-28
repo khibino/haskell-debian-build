@@ -17,5 +17,5 @@ module Debian.Package.Build
 
 import Debian.Package.Build.Monad
 import Debian.Package.Build.Command
-import Debian.Package.Build.Cabal hiding (hackageLongName, hackageName, hackageVersion, build)
+import Debian.Package.Build.Cabal hiding (build)
 import Debian.Package.Build.Sequence
