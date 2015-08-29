@@ -1,118 +1,79 @@
 Source: haskell-debian-build
 Maintainer: Kei Hibino <ex8k.hibino@gmail.com>
-Priority: optional
+Priority: extra
 Section: haskell
-Build-Depends: debhelper (>= 7.0)
-               , haskell-devscripts (>= 0.8)
-               , cdbs
-               , ghc
-               , ghc-prof
-               , ghc | libghc-cabal-dev
-               , ghc-prof | libghc-cabal-prof
-               , libghc-transformers-dev
-               , libghc-transformers-prof
-               , libghc-split-dev
-               , libghc-split-prof
-Build-Depends-Indep: ghc-doc
-                     , ghc-doc | libghc-cabal-doc
-                     , libghc-transformers-doc
+Build-Depends: debhelper (>= 7),
+ haskell-devscripts (>= 0.8),
+ cdbs,
+ ghc,
+ ghc-prof,
+ libghc-cabal-dev,
+ libghc-cabal-prof,
+ libghc-split-dev,
+ libghc-split-prof,
+Build-Depends-Indep: ghc-doc,
+ libghc-cabal-doc,
+ libghc-split-doc,
+Standards-Version: 3.9.6
+Homepage: http://twitter.com/khibino/
+X-Description: Debian package build sequence tools
+ This package provides build sequence functions
+ for debian package, and includes on-the-fly
+ build command 'odebuild'.
 
 Package: libghc-debian-build-dev
 Architecture: any
-Depends: ${shlibs:Depends}
-         , ${haskell:Depends}
-         , ${misc:Depends}
-Recommends: ${haskell:Recommends}
-         , rsync
-         , cabal-debian
-         , dpkg-dev
-         , devscripts
-	 , haskell-debian-utils
-         , apt
-	 , sudo
-Suggests: ${haskell:Suggests}
-Conflicts: ${haskell:Conflicts}
-Provides: ${haskell:Provides}
-Replaces: ${haskell:Replaces}
-Description: Debian package build sequence tools
- This package provides build sequence functions
- for debian package, and includes on-the-fly
- build command 'odebuild'.
+Depends: ${haskell:Depends},
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends: ${haskell:Recommends},
+ ${misc:HaskellDebianBuildUtilPkgs},
+Suggests: ${haskell:Suggests},
+Conflicts: ${haskell:Conflicts},
+Provides: ${haskell:Provides},
+Description: ${haskell:ShortDescription}${haskell:ShortBlurb}
+ ${haskell:LongDescription}
  .
-  Author: Kei Hibino
-  Upstream-Maintainer: ex8k.hibino@gmail.com
- .
- This package provides a library for the Haskell programming language.
- See http:///www.haskell.org/ for more information on Haskell.
+ ${haskell:Blurb}
 
 Package: libghc-debian-build-prof
 Architecture: any
-Depends: ${shlibs:Depends}
-         , ${haskell:Depends}
-         , ${misc:Depends}
-Recommends: ${haskell:Recommends}
-Suggests: ${haskell:Suggests}
-Conflicts: ${haskell:Conflicts}
-Provides: ${haskell:Provides}
-Replaces: ${haskell:Replaces}
-Description: Debian package build sequence tools
- This package provides build sequence functions
- for debian package, and includes on-the-fly
- build command 'odebuild'.
+Depends: ${haskell:Depends},
+ ${misc:Depends},
+Recommends: ${haskell:Recommends},
+Suggests: ${haskell:Suggests},
+Conflicts: ${haskell:Conflicts},
+Provides: ${haskell:Provides},
+Description: ${haskell:ShortDescription}${haskell:ShortBlurb}
+ ${haskell:LongDescription}
  .
-  Author: Kei Hibino
-  Upstream-Maintainer: ex8k.hibino@gmail.com
- .
- This package provides a library for the Haskell programming language, compiled
- for profiling.  See http:///www.haskell.org/ for more information on Haskell.
+ ${haskell:Blurb}
 
 Package: libghc-debian-build-doc
 Architecture: all
 Section: doc
-Depends: ${shlibs:Depends}
-         , ${haskell:Depends}
-         , ${misc:Depends}
-Recommends: ${haskell:Recommends}
-Suggests: ${haskell:Suggests}
-Conflicts: ${haskell:Conflicts}
-Provides: ${haskell:Provides}
-Replaces: ${haskell:Replaces}
-Description: Debian package build sequence tools
- This package provides build sequence functions
- for debian package, and includes on-the-fly
- build command 'odebuild'.
+Depends: ${haskell:Depends},
+ ${misc:Depends},
+Recommends: ${haskell:Recommends},
+Suggests: ${haskell:Suggests},
+Conflicts: ${haskell:Conflicts},
+Description: ${haskell:ShortDescription}${haskell:ShortBlurb}
+ ${haskell:LongDescription}
  .
-  Author: Kei Hibino
-  Upstream-Maintainer: ex8k.hibino@gmail.com
- .
- This package provides the documentation for a library for the Haskell
- programming language.
- See http:///www.haskell.org/ for more information on Haskell.
+ ${haskell:Blurb}
 
 Package: haskell-debian-build-utils
 Architecture: any
 Section: misc
-Depends: ${shlibs:Depends}
-         , ${haskell:Depends}
-         , ${misc:Depends}
-         , rsync
-         , cabal-debian
-         , dpkg-dev
-         , devscripts
-	 , haskell-debian-utils
-         , apt
-	 , sudo
-Recommends: ${haskell:Recommends}
-Suggests: ${haskell:Suggests}
-Conflicts: ${haskell:Conflicts}
-Provides: ${haskell:Provides}
-Replaces: ${haskell:Replaces}
-Description: Debian package build sequence tools
- This package provides build sequence functions
- for debian package, and includes on-the-fly
- build command 'odebuild'.
+Depends: ${haskell:Depends},
+ ${misc:Depends},
+ ${shlibs:Depends},
+ ${misc:HaskellDebianBuildUtilPkgs},
+Recommends: ${haskell:Recommends},
+Suggests: ${haskell:Suggests},
+Conflicts: ${haskell:Conflicts},
+Provides: ${haskell:Provides},
+Description: ${haskell:ShortDescription}${haskell:ShortBlurb}
+ ${haskell:LongDescription}
  .
-  Author: Kei Hibino
-  Upstream-Maintainer: ex8k.hibino@gmail.com
- .
- Files associated with the debian-build package.
+ ${haskell:Blurb}
