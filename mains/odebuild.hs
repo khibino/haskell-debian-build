@@ -148,4 +148,4 @@ main =  do
         "reinstall"     ->    runArgs reinstall as1
         _               ->    void $ runArgs build as2
 
-    []                  -> run . void $ build defaultOptions []
+    []                  ->    run . void $ build defaultOptions []
