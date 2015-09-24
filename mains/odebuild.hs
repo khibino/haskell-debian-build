@@ -58,8 +58,8 @@ descs =
 
 parseOption :: [String]
             -> (ODebuildOptions -> Either String ODebuildOptions, ([String], [String]))
-parseOption args = (foldr (>=>) return ufs, (ss1, ss2))  where
-  (ufs, ss1, ss2) = getOpt RequireOrder descs args
+parseOption args = (foldr (>=>) return ufs, (as, es))  where
+  (ufs, as, es) = getOpt RequireOrder descs args
 
 help :: IO ()
 help =  do
