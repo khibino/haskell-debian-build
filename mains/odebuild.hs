@@ -116,7 +116,7 @@ run b = do
 
 parseArgs :: [String] -> IO (ODebuildOptions, [String])
 parseArgs args0
-  | not $ null errs  = fail $ concat errs
+  | not $ null errs  = fail $ '\n' : concat [ "  " ++ e | e <- errs ]
   | not $ null args1 = fail $ "Unknown arguments: " ++ unwords args1
   | otherwise        =
       either (fail . ("Option parse error: " ++)) return $ do
