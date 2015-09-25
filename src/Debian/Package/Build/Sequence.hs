@@ -195,7 +195,9 @@ cabalGenSources hpkg = do
   copyDebianDir srcDir
   return pair
 
-cabalAutogenDebianDir :: Maybe String -> [String] -> Build FilePath
+cabalAutogenDebianDir :: Maybe String   -- ^ May specify revision string
+                      -> [String]       -- ^ Optional arguments of cabal-debian command
+                      -> Build FilePath -- ^ Generated debian-dir path
 cabalAutogenDebianDir mayRev cdArgs =  do
   baseDir  <-  askBaseDir
   let ddName =  "debian"
@@ -211,7 +213,10 @@ cabalAutogenDebianDir mayRev cdArgs =  do
   return debDir
 
 -- | Setup source directory and archive using Cabal and cabal-debian.
-cabalAutogenSources :: String -> Maybe String -> [String] -> Build ((FilePath, FilePath), HaskellPackage)
+cabalAutogenSources :: String                                       -- ^ Hackge name string
+                    -> Maybe String                                 -- ^ May specify revision string
+                    -> [String]                                     -- ^ Optional arguments of cabal-debian command
+                    -> Build ((FilePath, FilePath), HaskellPackage) -- ^ Result package informations of generated source
 cabalAutogenSources hname mayRev cdArgs = do
   debDir   <-  cabalAutogenDebianDir mayRev cdArgs
   pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
@@ -247,7 +252,9 @@ findCabalDescription :: MaybeT Build FilePath
 findCabalDescription =  MaybeT (askBaseDir >>= liftIO . Cabal.findDescriptionFile)
 
 -- | On the fly setup of source directory and archive.
-genSources :: Maybe String -> [String] -> Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))
+genSources :: Maybe String                                                -- ^ May specify revision string
+           -> [String]                                                    -- ^ Optional arguments of cabal-debian command
+           -> Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage)) -- ^ Result package informations of generated source
 genSources mayRev cdArgs = runMaybeT $
   do clog <- findDebianChangeLog
      src  <- lift . liftTrace $ dpkgParseChangeLog clog
