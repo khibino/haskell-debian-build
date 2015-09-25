@@ -65,10 +65,10 @@ help :: IO ()
 help =  do
   prog <- getProgName
   let opts  = "[options]"
-      debOpts = "[-- [debuild options]]"
+      debOpts = "[-- [cabal-debian-options [-- [debuild-options]]]"
       msg = unlines $ map unwords
             [ [prog, "clean"]
-            , [prog, "prepare", opts]
+            , [prog, "prepare", opts, "[-- [cabal-debian-options]]"]
             , [prog, "source", opts, debOpts]
             , [prog, "build", opts, debOpts]
             , [prog, "install", opts, debOpts]
@@ -114,21 +114,22 @@ run b = do
   cur <- pwd
   uncurry (runBuild b cur) defaultConfig
 
-parseArgs :: [String] -> IO (ODebuildOptions, [String])
+parseArgs :: [String] -> IO (ODebuildOptions, ([String], [String]))
 parseArgs args0
   | not $ null errs  = fail $ '\n' : concat [ "  " ++ e | e <- errs ]
   | not $ null args1 = fail $ "Unknown arguments: " ++ unwords args1
   | otherwise        =
       either (fail . ("Option parse error: " ++)) return $ do
         opts <- f defaultOptions
-        return (opts, drop 1 rest)
+        return (opts, (cdArgs, drop 1 rest1))
       where
-        (opt, rest) = break (== "--") args0
+        (opt, rest0) = break (== "--") args0
+        (cdArgs, rest1) = break (== "--") $ drop 1 rest0
         (f, (args1, errs)) = parseOption opt
 
 runArgs :: (ODebuildOptions -> [String] -> Build a) -> [String] -> IO a
 runArgs act as = do
-  (opts, args) <- parseArgs as
+  (opts, (_cdArgs, args)) <- parseArgs as
   run $ act opts args
 
 main :: IO ()
