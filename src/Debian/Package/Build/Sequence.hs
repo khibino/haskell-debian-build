@@ -196,7 +196,7 @@ cabalGenSources hpkg = do
   return pair
 
 cabalAutogenDebianDir :: Maybe String -> [String] -> Build FilePath
-cabalAutogenDebianDir mayRev _otherArgs =  do
+cabalAutogenDebianDir mayRev cdArgs =  do
   baseDir  <-  askBaseDir
   let ddName =  "debian"
       tmpDD  =  baseDir </> ddName
@@ -205,15 +205,15 @@ cabalAutogenDebianDir mayRev _otherArgs =  do
 
   debDir   <-  (</> ddName) <$> getBuildDir
   liftTrace $ do
-    cabalDebian baseDir mayRev
+    cabalDebian baseDir mayRev cdArgs
     createDirectoryIfMissing $ takeDirectory debDir
     renameDirectory tmpDD debDir
   return debDir
 
 -- | Setup source directory and archive using Cabal and cabal-debian.
 cabalAutogenSources :: String -> Maybe String -> [String] -> Build ((FilePath, FilePath), HaskellPackage)
-cabalAutogenSources hname mayRev otherArgs = do
-  debDir   <-  cabalAutogenDebianDir mayRev otherArgs
+cabalAutogenSources hname mayRev cdArgs = do
+  debDir   <-  cabalAutogenDebianDir mayRev cdArgs
   pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
   let hpkg =   haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
@@ -248,7 +248,7 @@ findCabalDescription =  MaybeT (askBaseDir >>= liftIO . Cabal.findDescriptionFil
 
 -- | On the fly setup of source directory and archive.
 genSources :: Maybe String -> [String] -> Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))
-genSources mayRev otherArgs = runMaybeT $
+genSources mayRev cdArgs = runMaybeT $
   do clog <- findDebianChangeLog
      src  <- lift . liftTrace $ dpkgParseChangeLog clog
      (do hname <- takeBaseName <$> findCabalDescription
@@ -260,7 +260,7 @@ genSources mayRev otherArgs = runMaybeT $
   <|>
   do hname <- takeBaseName <$> findCabalDescription
      lift $ do
-       (p, hpkg) <- cabalAutogenSources hname mayRev otherArgs
+       (p, hpkg) <- cabalAutogenSources hname mayRev cdArgs
        return (p, package hpkg, Just $ hackage hpkg)
   <|>
   do fail "No source generate rule found."

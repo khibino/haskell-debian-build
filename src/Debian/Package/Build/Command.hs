@@ -142,8 +142,8 @@ withCurrentDir' dir act = do
     act
 
 -- | Just call /cabal-debian/ command
-cabalDebian' :: Maybe String -> Trace ()
-cabalDebian' mayRev = do
+cabalDebian' :: Maybe String -> [String] -> Trace ()
+cabalDebian' mayRev otherArgs = do
   ver <-  origVersion' <$> packageVersion "cabal-debian"
   let revision = fromMaybe "1~autogen1" mayRev
       oldArgs = ["--quilt", "--revision=" ++ revision]
@@ -156,11 +156,11 @@ cabalDebian' mayRev = do
              | otherwise          ->  return oldArgs
     _                             ->  return oldArgs
 
-  rawSystem' "cabal-debian" args
+  rawSystem' "cabal-debian" $ args ++ otherArgs
 
 -- | Call /cabal-debian/ command under specified directory
-cabalDebian :: FilePath -> Maybe String -> Trace ()
-cabalDebian dir = withCurrentDir' dir . cabalDebian'
+cabalDebian :: FilePath -> Maybe String -> [String] -> Trace ()
+cabalDebian dir mayRev = withCurrentDir' dir . cabalDebian' mayRev
 
 -- | Query debian package version
 packageVersion :: String -> Trace DebianVersion
