@@ -81,31 +81,31 @@ help =  do
 clean :: Build ()
 clean =  removeBuildDir
 
-prepare :: ODebuildOptions -> Build ((FilePath, FilePath), Source, Maybe Hackage)
-prepare opts = do
+prepare :: ODebuildOptions -> [String] -> Build ((FilePath, FilePath), Source, Maybe Hackage)
+prepare opts _cdArgs = do
   clean
   maybe (fail "Illegal state: genSources") return =<< genSources (revision opts)
 
-build' :: [BuildMode] -> ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
-build' modes opts args = do
-  ((_, dir), src, mayH) <- prepare opts
-  liftTrace $ Command.build dir modes (installDeps opts) args
+build' :: [BuildMode] -> ODebuildOptions -> [String] -> [String] -> Build (Source, Maybe Hackage)
+build' modes opts cdArgs debArgs = do
+  ((_, dir), src, mayH) <- prepare opts cdArgs
+  liftTrace $ Command.build dir modes (installDeps opts) debArgs
   return (src, mayH)
 
-source :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
+source :: ODebuildOptions -> [String] -> [String] -> Build (Source, Maybe Hackage)
 source = build' [Src]
 
-build :: ODebuildOptions -> [String] -> Build (Source, Maybe Hackage)
+build :: ODebuildOptions -> [String] -> [String] -> Build (Source, Maybe Hackage)
 build opts = build' (buildModes opts []) opts
 
-install :: ODebuildOptions -> [String] -> Build ()
-install opts args = do
-  void $ build opts args
+install :: ODebuildOptions -> [String] -> [String] -> Build ()
+install opts cdArgs debArgs = do
+  void $ build opts cdArgs debArgs
   install'
 
-reinstall :: ODebuildOptions -> [String] -> Build ()
-reinstall opts args = do
-  (_src, mayH) <- build opts args
+reinstall :: ODebuildOptions -> [String] -> [String] -> Build ()
+reinstall opts cdArgs debArgs = do
+  (_src, mayH) <- build opts cdArgs debArgs
   maybe (return ()) remove' mayH
   install'
 
@@ -127,10 +127,10 @@ parseArgs args0
         (cdArgs, rest1) = break (== "--") $ drop 1 rest0
         (f, (args1, errs)) = parseOption opt
 
-runArgs :: (ODebuildOptions -> [String] -> Build a) -> [String] -> IO a
+runArgs :: (ODebuildOptions -> [String] -> [String] -> Build a) -> [String] -> IO a
 runArgs act as = do
-  (opts, (_cdArgs, args)) <- parseArgs as
-  run $ act opts args
+  (opts, (cdArgs, debArgs)) <- parseArgs as
+  run $ act opts cdArgs debArgs
 
 main :: IO ()
 main =  do
@@ -149,4 +149,4 @@ main =  do
         "reinstall"     ->    runArgs reinstall as1
         _               ->    void $ runArgs build as2
 
-    []                  ->    run . void $ build defaultOptions []
+    []                  ->    run . void $ build defaultOptions [] []
