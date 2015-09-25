@@ -195,8 +195,8 @@ cabalGenSources hpkg = do
   copyDebianDir srcDir
   return pair
 
-cabalAutogenDebianDir :: Maybe String -> Build FilePath
-cabalAutogenDebianDir mayRev =  do
+cabalAutogenDebianDir :: Maybe String -> [String] -> Build FilePath
+cabalAutogenDebianDir mayRev _otherArgs =  do
   baseDir  <-  askBaseDir
   let ddName =  "debian"
       tmpDD  =  baseDir </> ddName
@@ -211,9 +211,9 @@ cabalAutogenDebianDir mayRev =  do
   return debDir
 
 -- | Setup source directory and archive using Cabal and cabal-debian.
-cabalAutogenSources :: String -> Maybe String -> Build ((FilePath, FilePath), HaskellPackage)
-cabalAutogenSources hname mayRev = do
-  debDir   <-  cabalAutogenDebianDir mayRev
+cabalAutogenSources :: String -> Maybe String -> [String] -> Build ((FilePath, FilePath), HaskellPackage)
+cabalAutogenSources hname mayRev otherArgs = do
+  debDir   <-  cabalAutogenDebianDir mayRev otherArgs
   pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
   let hpkg =   haskellPackageFromPackage hname pkg
   pair@(_, srcDir)  <-  cabalGenOrigSources hpkg
@@ -247,8 +247,8 @@ findCabalDescription :: MaybeT Build FilePath
 findCabalDescription =  MaybeT (askBaseDir >>= liftIO . Cabal.findDescriptionFile)
 
 -- | On the fly setup of source directory and archive.
-genSources :: Maybe String -> Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))
-genSources mayRev = runMaybeT $
+genSources :: Maybe String -> [String] -> Build (Maybe ((FilePath, FilePath), Source, Maybe Hackage))
+genSources mayRev otherArgs = runMaybeT $
   do clog <- findDebianChangeLog
      src  <- lift . liftTrace $ dpkgParseChangeLog clog
      (do hname <- takeBaseName <$> findCabalDescription
@@ -260,7 +260,7 @@ genSources mayRev = runMaybeT $
   <|>
   do hname <- takeBaseName <$> findCabalDescription
      lift $ do
-       (p, hpkg) <- cabalAutogenSources hname mayRev
+       (p, hpkg) <- cabalAutogenSources hname mayRev otherArgs
        return (p, package hpkg, Just $ hackage hpkg)
   <|>
   do fail "No source generate rule found."

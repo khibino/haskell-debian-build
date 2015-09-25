@@ -82,9 +82,9 @@ clean :: Build ()
 clean =  removeBuildDir
 
 prepare :: ODebuildOptions -> [String] -> Build ((FilePath, FilePath), Source, Maybe Hackage)
-prepare opts _cdArgs = do
+prepare opts cdArgs = do
   clean
-  maybe (fail "Illegal state: genSources") return =<< genSources (revision opts)
+  maybe (fail "Illegal state: genSources") return =<< genSources (revision opts) cdArgs
 
 build' :: [BuildMode] -> ODebuildOptions -> [String] -> [String] -> Build (Source, Maybe Hackage)
 build' modes opts cdArgs debArgs = do
