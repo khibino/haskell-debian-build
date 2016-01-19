@@ -24,7 +24,7 @@ module Debian.Package.Build.Sequence
 
        , genSources
 
-       , findGeneragedSourceDir
+       , findGeneratedSourceDir
        ) where
 
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
@@ -275,8 +275,8 @@ genSources mayRev cdArgs = runMaybeT $
   do fail "No source generate rule found."
 
 -- | Probe generated source directory path.
-findGeneragedSourceDir :: MaybeT Build FilePath
-findGeneragedSourceDir = do
+findGeneratedSourceDir :: MaybeT Build FilePath
+findGeneratedSourceDir = do
   bd  <- lift getBuildDir
   fs  <- liftIO $ getDirectoryContents bd
   msum
