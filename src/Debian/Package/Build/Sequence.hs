@@ -23,13 +23,15 @@ module Debian.Package.Build.Sequence
        , cabalGenOrigSources, cabalGenSources, cabalAutogenSources
 
        , genSources
+
+       , findGeneragedSourceDir
        ) where
 
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
 import System.Directory
   (getDirectoryContents, doesDirectoryExist, doesFileExist)
 import Control.Applicative (pure, (<$>), (<*>), (<|>))
-import Control.Monad (when)
+import Control.Monad (when, guard, msum)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Maybe (MaybeT(MaybeT), runMaybeT)
@@ -271,3 +273,16 @@ genSources mayRev cdArgs = runMaybeT $
        return (p, package hpkg, Just $ hackage hpkg)
   <|>
   do fail "No source generate rule found."
+
+-- | Probe generated source directory path.
+findGeneragedSourceDir :: MaybeT Build FilePath
+findGeneragedSourceDir = do
+  bd  <- lift getBuildDir
+  fs  <- liftIO $ getDirectoryContents bd
+  msum
+    [ do MaybeT . liftIO $ guard <$> doesFileExist (path </> "debian" </> "control")
+         pure path
+    | f  <- fs
+    , f `notElem` [".", ".."]
+    , let path = bd </> f
+    ]
