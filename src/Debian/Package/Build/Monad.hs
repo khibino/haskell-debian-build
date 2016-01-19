@@ -20,7 +20,7 @@ module Debian.Package.Build.Monad
 
        , Config, defaultConfig, buildDir, debianDirName, sourceExcludes
 
-       , Build, liftTrace, runBuild, askConfig
+       , Build, liftTrace, unBuild, runBuild, askConfig
        , bracketBuild, bracketBuild_
        ) where
 
@@ -144,9 +144,13 @@ type Build = ReaderT BaseDir (ReaderT Config Trace)
 liftTrace :: Trace a -> Build a
 liftTrace =  lift . lift
 
+-- | Unpack 'Build' configuration monad into 'Trace'.
+unBuild :: Build a -> BaseDir -> Config -> Trace a
+unBuild b bd = runReaderT $ runReaderT b bd
+
 -- | Run 'Build' configuration monad
 runBuild :: Build a -> BaseDir -> Config -> Bool -> IO a
-runBuild b bd = runTrace . (runReaderT $ runReaderT b bd)
+runBuild b bd = runTrace . unBuild b bd
 
 -- | bracket for 'Build' monad
 bracketBuild :: Build a -> (a -> Build b) -> (a -> Build c) -> Build c
