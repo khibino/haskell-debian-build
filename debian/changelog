@@ -1,3 +1,9 @@
+haskell-debian-build (0.9.1.0-2) unstable; urgency=medium
+
+  * Bugfix of dependencies.
+
+ -- Kei Hibino <ex8k.hibino@gmail.com>  Fri, 22 Jan 2016 18:01:57 +0900
+
 haskell-debian-build (0.9.1.0-1) unstable; urgency=medium
 
   * New upstream release.
