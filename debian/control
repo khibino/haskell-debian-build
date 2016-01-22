@@ -24,6 +24,7 @@ Depends: ${shlibs:Depends}
          , ${haskell:Depends}
          , ${misc:Depends}
 Recommends: ${haskell:Recommends}
+         , ${misc:HaskellDebianBuildUtilPkgs}
 Suggests: ${haskell:Suggests}
 Conflicts: ${haskell:Conflicts}
 Provides: ${haskell:Provides}
@@ -89,6 +90,7 @@ Section: misc
 Depends: ${shlibs:Depends}
          , ${haskell:Depends}
          , ${misc:Depends}
+         , ${misc:HaskellDebianBuildUtilPkgs}
 Recommends: ${haskell:Recommends}
 Suggests: ${haskell:Suggests}
 Conflicts: ${haskell:Conflicts}
