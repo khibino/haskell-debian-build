@@ -6,8 +6,7 @@ DEB_DEFAULT_COMPILER = ghc
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/hlibrary.mk
 
-utils_substvar = -Vmisc:HaskellDebianBuildUtilPkgs="rsync, cabal-debian, dpkg-dev, devscripts, haskell-debian-utils, apt, sudo"
-DEB_DH_GENCONTROL_ARGS_libghc-debian-build-dev += $(utils_substvar)
-DEB_DH_GENCONTROL_ARGS_haskell-debian-build-utils += $(utils_substvar)
+install/libghc-debian-build-dev install/haskell-debian-build-utils::
+	echo 'misc:HaskellDebianBuildUtilPkgs=rsync, cabal-debian, dpkg-dev, devscripts, haskell-debian-utils, apt, sudo' >> debian/$(cdbs_curpkg).substvars
 
 build/haskell-debian-build-utils:: build-ghc-stamp
