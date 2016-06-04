@@ -1,6 +1,6 @@
 -- |
 -- Module      : Debian.Package.Build.Sequence
--- Copyright   : 2014-2015 Kei Hibino
+-- Copyright   : 2014-2016 Kei Hibino
 -- License     : BSD3
 --
 -- Maintainer  : ex8k.hibino@gmail.com
