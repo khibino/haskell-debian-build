@@ -24,7 +24,7 @@ module Debian.Package.Build.Sequence
 
        , genSources
 
-       , findGeneratedSourceDir
+       , findGeneratedSourceDir, findGeneratedSource,
        ) where
 
 import System.FilePath ((</>), takeFileName, takeDirectory, takeBaseName)
@@ -286,3 +286,11 @@ findGeneratedSourceDir = do
     , f `notElem` [".", ".."]
     , let path = bd </> f
     ]
+
+-- | Probe generated source informations
+findGeneratedSource :: MaybeT Build (FilePath, Source, Hackage)
+findGeneratedSource = do
+  srcDir <- findGeneratedSourceDir
+  src    <- lift . liftTrace $ dpkgParseChangeLog $ srcDir </> "debian" </> "changelog"
+  hname <- takeBaseName <$> findCabalDescription
+  return (srcDir, src, hackage $ haskellPackageFromPackage hname src)
