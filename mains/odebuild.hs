@@ -1,4 +1,5 @@
 import Control.Monad (void, when, (>=>))
+import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Maybe (listToMaybe)
 import System.Environment (getProgName, getArgs)
 import System.Console.GetOpt
@@ -10,7 +11,7 @@ import qualified Debian.Package.Build.Command as Command
 import Debian.Package.Build
   (BuildMode (Dep, Indep, Src), debi', pwd,
    defaultConfig, Build, runBuild, liftTrace,
-   removeBuildDir, findDebianChanges, genSources, removeGhcLibrary)
+   removeBuildDir, findDebianChanges, genSources, findGeneratedSource, removeGhcLibrary)
 
 
 remove' :: Hackage -> Build ()
@@ -109,6 +110,17 @@ reinstall opts cdArgs debArgs = do
   maybe (return ()) remove' mayH
   install'
 
+compile :: ODebuildOptions -> [String] -> [String] -> Build (Source, Hackage)
+compile opts _ debArgs = do
+  (dir, src, hkg) <- maybe (fail "generated source not found") return =<< runMaybeT findGeneratedSource
+  liftTrace $ Command.build dir (buildModes opts []) (installDeps opts) debArgs
+  return (src, hkg)
+
+compileInstall :: ODebuildOptions -> [String] -> [String] -> Build ()
+compileInstall opts x debArgs = do
+  void $ compile opts x debArgs
+  install'
+
 run :: Build a -> IO a
 run b = do
   cur <- pwd
@@ -147,6 +159,8 @@ main =  do
         "build"         ->    void $ runArgs build as1
         "install"       ->    runArgs install as1
         "reinstall"     ->    runArgs reinstall as1
+        "compile"       ->    void $ runArgs compile as1
+        "compile-i"     ->    runArgs compileInstall as1
         _               ->    void $ runArgs build as2
 
     []                  ->    run . void $ build defaultOptions [] []

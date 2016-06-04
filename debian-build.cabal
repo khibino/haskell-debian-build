@@ -42,6 +42,7 @@ library
 executable odebuild
   build-depends:       base <5
                      , filepath
+                     , transformers
                      , debian-build
 
   main-is: odebuild.hs
