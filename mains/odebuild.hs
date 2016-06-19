@@ -31,6 +31,7 @@ data ODebuildOptions =
   { revision    :: Maybe String
   , installDeps :: Bool
   , buildModes  :: [BuildMode] -> [BuildMode]
+  , reuseSource :: Bool
   }
 
 defaultOptions :: ODebuildOptions
@@ -39,6 +40,7 @@ defaultOptions =
   { revision     =  Nothing
   , installDeps  =  False
   , buildModes   =  id
+  , reuseSource  =  False
   }
 
 descs :: [OptDescr (ODebuildOptions -> Either String ODebuildOptions)]
@@ -55,6 +57,9 @@ descs =
                 return $ opts { buildModes = buildModes opts . (m : ) } )
      "BUILD_MODE")
     "add build-mode to build-mode list to specify"
+  , Option ['R'] ["reuse-source"]
+    (NoArg $ \opts   -> return $ opts { reuseSource = True })
+    "not clean generated source directory, and build will reuse it"
   ]
 
 parseOption :: [String]
