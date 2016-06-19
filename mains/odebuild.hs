@@ -87,14 +87,21 @@ help =  do
 clean :: Build ()
 clean =  removeBuildDir
 
-prepare :: ODebuildOptions -> [String] -> Build ((FilePath, FilePath), Source, Maybe Hackage)
-prepare opts cdArgs = do
-  clean
-  maybe (fail "Illegal state: genSources") return =<< genSources (revision opts) cdArgs
+prepare :: ODebuildOptions -> [String] -> Build (FilePath, Source, Maybe Hackage)
+prepare opts cdArgs
+  | reuseSource opts = do
+      (dir, src, hkg) <- maybe (fail "generated source not found") return
+                         =<< runMaybeT findGeneratedSource
+      return (dir, src, Just hkg)
+  | otherwise        = do
+      clean
+      ((_, dir), src, mayH) <- maybe (fail "Illegal state: genSources") return
+                               =<< genSources (revision opts) cdArgs
+      return (dir, src, mayH)
 
 build' :: [BuildMode] -> ODebuildOptions -> [String] -> [String] -> Build (Source, Maybe Hackage)
 build' modes opts cdArgs debArgs = do
-  ((_, dir), src, mayH) <- prepare opts cdArgs
+  (dir, src, mayH) <- prepare opts cdArgs
   liftTrace $ Command.build dir modes (installDeps opts) debArgs
   return (src, mayH)
 
