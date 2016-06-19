@@ -122,17 +122,6 @@ reinstall opts cdArgs debArgs = do
   maybe (return ()) remove' mayH
   install'
 
-compile :: ODebuildOptions -> [String] -> [String] -> Build (Source, Hackage)
-compile opts _ debArgs = do
-  (dir, src, hkg) <- maybe (fail "generated source not found") return =<< runMaybeT findGeneratedSource
-  liftTrace $ Command.build dir (buildModes opts []) (installDeps opts) debArgs
-  return (src, hkg)
-
-compileInstall :: ODebuildOptions -> [String] -> [String] -> Build ()
-compileInstall opts x debArgs = do
-  void $ compile opts x debArgs
-  install'
-
 run :: Build a -> IO a
 run b = do
   cur <- pwd
@@ -171,8 +160,6 @@ main =  do
         "build"         ->    void $ runArgs build as1
         "install"       ->    runArgs install as1
         "reinstall"     ->    runArgs reinstall as1
-        "compile"       ->    void $ runArgs compile as1
-        "compile-i"     ->    runArgs compileInstall as1
         _               ->    void $ runArgs build as2
 
     []                  ->    run . void $ build defaultOptions [] []
