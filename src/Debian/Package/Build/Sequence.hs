@@ -220,6 +220,10 @@ cabalAutogenSources :: String                                       -- ^ Hackge 
                     -> [String]                                     -- ^ Optional arguments of cabal-debian command
                     -> Build ((FilePath, FilePath), HaskellPackage) -- ^ Result package informations of generated source
 cabalAutogenSources hname mayRev cdArgs = do
+  {- Fill Setup.hs to make cabal-debian can detect.
+     Newer cabal-debian generates `DEB_SETUP_BIN_NAME = cabal' line,
+     which causes home directory access errors at build time. -}
+  liftIO . Cabal.fillSetupHs =<< askBaseDir
   debDir   <-  cabalAutogenDebianDir mayRev cdArgs
   pkg      <-  liftTrace . dpkgParseChangeLog $ debDir </> "changelog"
   let hpkg =   haskellPackageFromPackage hname pkg
