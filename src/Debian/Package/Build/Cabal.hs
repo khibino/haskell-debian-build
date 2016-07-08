@@ -10,13 +10,14 @@
 -- This module wraps cabal library interfaces to keep sparse dependency to it.
 module Debian.Package.Build.Cabal
        ( findDescriptionFile
+       , fillSetupHs
 
        , setupCmd, clean, sdist
        , configure, build, install, register
        )  where
 
 import Control.Applicative ((<$>))
-import Control.Monad (filterM)
+import Control.Monad (filterM, when)
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (listToMaybe)
 import Data.List (isSuffixOf)
@@ -39,6 +40,12 @@ findDescriptionFile dir = do
         | otherwise                    =  return False
         where suf = ".cabal"
   fmap (dir </>) . listToMaybe <$> filterM find fs
+
+fillSetupHs :: FilePath -> IO ()
+fillSetupHs dir = do
+  found <- or <$> mapM (doesFileExist . (dir </>)) ["Setup.hs", "Setup.lhs"]
+  when (not found) . writeFile (dir </> "Setup.hs") $
+    unlines ["import Distribution.Simple", "main = defaultMain"]
 
 setup :: [String] -> Trace ()
 setup args =  do
