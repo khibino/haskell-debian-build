@@ -19,15 +19,13 @@ module Debian.Package.Build.Cabal
 import Control.Applicative ((<$>))
 import Control.Monad (filterM, when)
 import Control.Monad.Trans.Class (lift)
-import Data.Maybe (listToMaybe)
+import Data.Maybe (listToMaybe, isJust)
 import Data.List (isSuffixOf)
 import System.FilePath ((</>))
 import System.Directory (getDirectoryContents, doesFileExist)
-import System.Environment (withArgs)
 
-import Distribution.Simple (defaultMain)
-
-import Debian.Package.Build.Monad (Trace, traceCommand)
+import Debian.Package.Build.Monad (Trace)
+import Debian.Package.Build.Command (rawSystem')
 
 
 -- | Find .cabal file
@@ -41,16 +39,21 @@ findDescriptionFile dir = do
         where suf = ".cabal"
   fmap (dir </>) . listToMaybe <$> filterM find fs
 
+findSetupHs :: FilePath -> IO (Maybe FilePath)
+findSetupHs dir =
+  listToMaybe <$>
+  filterM (doesFileExist . (dir </>)) ["Setup.hs", "Setup.lhs"]
+
 fillSetupHs :: FilePath -> IO ()
 fillSetupHs dir = do
-  found <- or <$> mapM (doesFileExist . (dir </>)) ["Setup.hs", "Setup.lhs"]
+  found <- isJust <$> findSetupHs dir
   when (not found) . writeFile (dir </> "Setup.hs") $
     unlines ["import Distribution.Simple", "main = defaultMain"]
 
 setup :: [String] -> Trace ()
-setup args =  do
-  traceCommand (unwords $ "<cabal>" : args)
-  lift $ args `withArgs` defaultMain
+setup args = do
+  setupHs  <-  maybe (fail "Setup.hs or Setup.lhs is not found.") id <$> lift (findSetupHs ".")
+  rawSystem' "runghc" $ setupHs : args
 
 -- | Call cabal library defaultMain like Setup.hs
 setupCmd :: String -> [String] -> Trace ()
