@@ -147,14 +147,22 @@ cabalDebian' mayRev otherArgs = do
   ver <-  origVersion' <$> packageVersion "cabal-debian"
   let revision = fromMaybe "1~autogen1" mayRev
       oldArgs = ["--quilt", "--revision=" ++ revision]
-  args <- case versionBranch ver of
+      verBranch = take 2 $ versionBranch ver ++ [0,0]
+
+  args <- case verBranch of
     (x:y:_)  | x <= 1             ->  fail
                                       $ "Version of cabal-debian is TOO OLD: "
-                                      ++ showVersion ver
+                                      ++ "'" ++ showVersion ver ++ "'"
                                       ++ " - Under version 1 generates wrong dependencies."
-             | x == 4 && y >= 19  ->  return ["--revision=" ++ '-' : revision]
-             | otherwise          ->  return oldArgs
-    _                             ->  return oldArgs
+             | 2 <= x && x <= 3   ->  return oldArgs
+             | x == 4 && y <  19  ->  return oldArgs
+             | x >= 4             ->  return ["--revision=" ++ '-' : revision]
+             | otherwise          ->  fail
+                                      $ "unknown version: "
+                                      ++ "'" ++ showVersion ver ++ "'"
+    _                             ->  fail
+                                      $ "unexpected version format: "
+                                      ++ "'" ++ showVersion ver ++ "'"
 
   rawSystem' "cabal-debian" $ args ++ otherArgs
 
