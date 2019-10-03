@@ -1,6 +1,7 @@
 import Control.Monad (void, when, (>=>))
 import Control.Monad.Trans.Maybe (MaybeT (..))
 import Data.Maybe (listToMaybe)
+import Data.List (intercalate)
 import System.Environment (getProgName, getArgs)
 import System.Console.GetOpt
   (OptDescr (Option), ArgDescr (ReqArg, NoArg), ArgOrder (RequireOrder),
@@ -55,12 +56,17 @@ descs =
     (ReqArg (\s opts -> maybe (Left $ "Unknown build mode: " ++ s) Right $ do
                 m <- listToMaybe [m | (m, "") <- reads s]
                 return $ opts { buildModes = buildModes opts . (m : ) } )
-     "BUILD_MODE")
+     modesEx)
     "add build-mode to build-mode list to specify"
   , Option ['R'] ["reuse-source"]
     (NoArg $ \opts   -> return $ opts { reuseSource = True })
     "not clean generated source directory, and build will reuse it"
   ]
+
+modesEx :: String
+modesEx =
+  ("{" ++ ) . (++ "}") . intercalate "|" $
+  map show ([minBound .. maxBound] :: [BuildMode])
 
 parseOption :: [String]
             -> (ODebuildOptions -> Either String ODebuildOptions, ([String], [String]))
