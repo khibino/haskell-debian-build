@@ -1,0 +1,94 @@
+name: Haskell with cabal-install
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ghc: '9.0.1'
+            cabal-install: '3.4'
+          - ghc: '8.10.4'
+            cabal-install: '3.2'
+          - ghc: '8.8.4'
+            cabal-install: '3.0'
+          - ghc: '8.6.5'
+            cabal-install: '2.4'     # hvr binary '2.4'
+          - ghc: '8.4.4'
+            cabal-install: '2.2'     # hvr binary '2.2'
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: khibino/haskell-actions/setup@v1-g7
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: ${{ matrix.cabal-install }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      env:
+        cache-name: cache-cabal
+      with:
+        path: ~/.cabal
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
+    - name: Clear cabal configuration
+      run: |
+        # remove cabal configuration in cache
+        rm ~/.cabal/config
+        cabal --version
+    - name: Install dependencies
+      run: |
+        set -ex
+        cabal new-update
+        if [ -r cabal.project ]; then
+          target=all
+        else
+          target=
+        fi
+        # apply new-* commands for no v2-* like caba-install 2.2
+        cabal new-build --jobs=2 --only-dependencies --enable-tests --enable-benchmarks $target
+    - name: Build
+      run: |
+        set -ex
+        if [ -r cabal.project ]; then
+          target=all
+        else
+          target=
+        fi
+        cabal new-build --jobs=2 --enable-tests --enable-benchmarks $target
+    - name: Run tests
+      run: |
+        set -ex
+        run_test=yes
+        if [ -r cabal.project ]; then
+          target=all
+        else
+          target=
+          if grep '^test-suite' *.cabal > /dev/null; then
+            :
+          else
+            run_test=no
+          fi
+        fi
+        if [ "$run_test" = yes ]; then
+          cabal new-test $target
+        fi
+
+### Local Variables: ***
+### mode:yaml ***
+### indent-tabs-mode: nil ***
+### End: ***

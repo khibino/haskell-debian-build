@@ -1,0 +1,84 @@
+name: Haskell with cabal no v2-
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    # dirty hack applying ubuntu-18.04 (bionic) to execute xenial binaries
+    runs-on: ubuntu-18.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ghc: '8.2.2'
+            cabal-install: '2.0'           # hvr binary '2.0.0.1'
+          - ghc: '8.0.2'
+            cabal-install: '1.24'          # hvr binary '1.24.0.2'
+          - ghc: '7.10.3'
+            ghc-option: --ghc-option=-optl-no-pie
+            cabal-install: '1.22'          # hvr binary '1.22.9.0'
+          - ghc: '7.8.4'
+            ghc-option: --ghc-option=-optl-no-pie
+            cabal-install: '1.22'
+          - ghc: '7.6.3'
+            ghc-option: --ghc-option=-optl-no-pie
+            cabal-install: '1.22'
+          - ghc: '7.4.2'
+            ghc-option: --ghc-option=-optl-no-pie
+            cabal-install: '1.22'
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: khibino/haskell-actions/setup@v1-g7
+    # - uses: haskell/actions/setup@v1
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: ${{ matrix.cabal-install }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      env:
+        cache-name: cache-cabal
+      with:
+        path: ~/.cabal
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
+    - name: Clear cabal configuration
+      run: |
+        # remove cabal configuration in cache
+        rm ~/.cabal/config
+        cabal --version
+    - name: Install dependencies
+      run: |
+        set -ex
+        cabal update
+        # clear positional params
+        set --
+        envfile=CI/env-ghc-${{ matrix.ghc }}
+        # set constraint set to positional params
+        [ ! -r $envfile ] || . $envfile
+        cabal install "$@" ${{ matrix.ghc-option }} --jobs=2 --avoid-reinstalls --only-dependencies --enable-tests
+    - name: Build
+      run: |
+        set -ex
+        cabal configure --enable-tests
+        cabal build ${{ matrix.ghc-option }} --jobs=2
+    - name: Run tests
+      run: |
+        set -ex
+        # pass linker option for re-linking case
+        cabal test ${{ matrix.ghc-option }}
+
+### Local Variables: ***
+### mode:yaml ***
+### indent-tabs-mode: nil ***
+### End: ***
