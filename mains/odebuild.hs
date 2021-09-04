@@ -47,8 +47,10 @@ defaultOptions =
 descs :: [OptDescr (ODebuildOptions -> Either String ODebuildOptions)]
 descs =
   [ Option [] ["revision"]
-    (ReqArg (\s opts -> return $ opts { revision = Just s }) "DEBIAN_REVISION")
-    "debian package revision to pass to cabal-debian"
+    (ReqArg (\s opts -> return $ opts { revision = Just s }) "DEBIAN_REVISION") $
+    unlines
+    ["debian package revision to pass to cabal-debian",
+     "revision string may use on auto-generating debian directory"]
   , Option [] ["install-deps"]
     (NoArg $ \opts   -> return $ opts { installDeps = True })
     "install build depends before running build"
@@ -60,7 +62,7 @@ descs =
     "add build-mode to build-mode list to specify"
   , Option ['R'] ["reuse-source"]
     (NoArg $ \opts   -> return $ opts { reuseSource = True })
-    "not clean generated source directory, and build will reuse it"
+    "not clean generated source directory, and build operation will reuse it"
   ]
 
 modesEx :: String
@@ -79,14 +81,13 @@ help =  do
   let opts  = "[options]"
       debOpts = "[-- [cabal-debian-options [-- [debuild-options]]]"
       msg = unlines $ map unwords
-            [ [prog, "clean"]
-            , [prog, "prepare", opts, "[-- [cabal-debian-options]]"]
-            , [prog, "source", opts, debOpts]
-            , [prog, "build", opts, debOpts]
-            , [prog, "install", opts, debOpts]
-            , [prog, "reinstall", opts, debOpts]
-            , ["  reinstall (Remove and install) support only for Haskell"]
-            , ["  Revision string may use on auto-generating debian directory."]
+            [ ["Usage:", prog, "clean"]
+            , ["      ", prog, "prepare", opts, "[-- [cabal-debian-options]]"]
+            , ["      ", prog, "source", opts, debOpts]
+            , ["      ", prog, "build", opts, debOpts]
+            , ["      ", prog, "install", opts, debOpts]
+            , ["      ", prog, "reinstall", opts, debOpts]
+            , ["      ", "  reinstall (Remove and install) support only for Haskell library packages"]
             ]
   putStr $ usageInfo msg descs
 
