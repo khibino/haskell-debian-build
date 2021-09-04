@@ -1,3 +1,9 @@
+haskell-debian-build (0.10.2.1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Kei Hibino <ex8k.hibino@gmail.com>  Sat, 04 Sep 2021 20:35:41 +0900
+
 haskell-debian-build (0.10.2.0-1) unstable; urgency=medium
 
   * New upstream release.
