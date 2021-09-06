@@ -4,7 +4,7 @@ synopsis:            Debian package build sequence tools
 description:         This package provides build sequence functions
                      for debian package, and includes on-the-fly
                      build command 'odebuild'.
-homepage:            http://twitter.com/khibino/
+homepage:            https://github.com/khibino/haskell-debian-build
 license:             BSD3
 license-file:        LICENSE
 author:              Kei Hibino
